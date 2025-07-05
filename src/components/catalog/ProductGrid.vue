@@ -36,11 +36,15 @@
         
         <!-- Controles -->
         <div class="flex items-center gap-3">
-          <select class="px-4 py-2 rounded-lg bg-white/90 text-sm font-medium">
-            <option>Más relevantes</option>
-            <option>Precio: menor a mayor</option>
-            <option>Precio: mayor a menor</option>
-            <option>Más nuevos</option>
+          <select 
+            v-model="sortOrder"
+            @change="handleSortChange"
+            class="px-4 py-2 rounded-lg bg-white/90 text-gray-800 text-sm font-medium border-0 focus:ring-2 focus:ring-white/50 transition-all"
+          >
+            <option value="nombre_asc">Alfabéticamente A-Z</option>
+            <option value="nombre_desc">Alfabéticamente Z-A</option>
+            <option value="precio_asc">Precio: menor a mayor</option>
+            <option value="precio_desc">Precio: mayor a menor</option>
           </select>
           
           <div class="flex gap-1 bg-white/10 rounded-lg p-1">
@@ -59,11 +63,6 @@
               <ListBulletIcon class="h-5 w-5 text-white" />
             </button>
           </div>
-          
-          <button class="btn btn-secondary flex items-center gap-2">
-            <AdjustmentsHorizontalIcon class="h-5 w-5" />
-            <span class="hidden sm:inline">Filtros</span>
-          </button>
         </div>
       </div>
     </div>
@@ -71,10 +70,13 @@
     <!-- Content -->
     <div>
       <!-- Loading state -->
-      <div v-if="loading" class="flex justify-center py-20">
-        <div class="text-center">
-          <div class="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <p class="text-white">Cargando productos...</p>
+      <div v-if="isLoading">
+        <div 
+          :class="viewMode === 'grid' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
+            : 'space-y-4'"
+        >
+          <ProductSkeleton v-for="i in 12" :key="`loading-product-${i}`" />
         </div>
       </div>
       
@@ -90,7 +92,7 @@
       </div>
       
       <!-- Empty state -->
-      <div v-else-if="!hasProducts" class="flex justify-center py-20">
+      <div v-else-if="showEmptyState" class="flex justify-center py-20">
         <div class="glass max-w-md p-8 rounded-xl text-center">
           <ShoppingBagIcon class="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 class="text-lg font-semibold text-gray-800 mb-2">No se encontraron productos</h3>
@@ -145,11 +147,11 @@ import {
   XMarkIcon,
   Squares2X2Icon as ViewGridIcon,
   ListBulletIcon,
-  AdjustmentsHorizontalIcon,
   ExclamationTriangleIcon,
   ShoppingBagIcon
 } from '@heroicons/vue/24/outline'
 import ProductCard from './ProductCard.vue'
+import ProductSkeleton from '@/components/ui/ProductSkeleton.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 
 // Stores
@@ -161,6 +163,8 @@ const searchQuery = ref('')
 const selectedCategory = ref<number | null>(null)
 const showFeaturedOnly = ref(false)
 const viewMode = ref<'grid' | 'list'>('grid')
+const initialLoading = ref(true)
+const sortOrder = ref('nombre_asc')
 
 // Computed
 const products = computed(() => catalogStore.products)
@@ -178,6 +182,14 @@ const hasActiveFilters = computed(() =>
   searchQuery.value.length > 0 || 
   showFeaturedOnly.value
 )
+
+// Add a computed to track if we should show empty state
+const showEmptyState = computed(() => 
+  !loading.value && !error.value && !hasProducts.value && !initialLoading.value
+)
+
+// Update loading to include initial loading
+const isLoading = computed(() => loading.value || initialLoading.value)
 
 // Methods
 const getCategoryName = (categoryId: number) => {
@@ -222,27 +234,28 @@ const goToPage = (page: number) => {
 
 const fetchProducts = async () => {
   await catalogStore.fetchProducts()
+  initialLoading.value = false
 }
 
 const retry = () => {
   fetchProducts()
 }
 
+const handleSortChange = async () => {
+  const sortValue = sortOrder.value || null
+  await catalogStore.setSortBy(sortValue as any)
+}
+
 const syncFiltersFromStore = () => {
   searchQuery.value = catalogStore.searchQuery
   selectedCategory.value = catalogStore.selectedCategory
   showFeaturedOnly.value = catalogStore.showFeaturedOnly
+  sortOrder.value = catalogStore.sortBy || ''
 }
 
 // Initialize
 onMounted(async () => {
-  await companyStore.init()
-  catalogStore.initWithCompany()
-  
-  if (!catalogStore.hasCategories) {
-    await catalogStore.fetchCategories()
-  }
-  
+  // Company and categories are already initialized in App.vue
   syncFiltersFromStore()
   await fetchProducts()
 })

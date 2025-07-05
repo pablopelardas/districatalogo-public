@@ -29,16 +29,30 @@ export function useTheme() {
       return null
     }
     
-    const colors = coloresTheme.split(',').map(color => color.trim())
-    
-    // Expect format: "primary,secondary,accent" or "primary,secondary,accent,text,background"
-    if (colors.length >= 3) {
-      return {
-        primary: colors[0] || '#3b82f6',
-        secondary: colors[1] || '#64748b',
-        accent: colors[2] || '#f1f5f9',
-        text: colors[3] || '#1e293b',
-        background: colors[4] || '#ffffff'
+    try {
+      // Try to parse as JSON first (new format)
+      const colorObj = JSON.parse(coloresTheme)
+      if (colorObj && typeof colorObj === 'object') {
+        return {
+          primary: colorObj.primario || colorObj.primary || '#3b82f6',
+          secondary: colorObj.secundario || colorObj.secondary || '#64748b',
+          accent: colorObj.acento || colorObj.accent || '#f1f5f9',
+          text: colorObj.texto || colorObj.text || '#1e293b',
+          background: colorObj.fondo || colorObj.background || '#ffffff'
+        }
+      }
+    } catch (e) {
+      // If JSON parsing fails, try the old comma-separated format
+      const colors = coloresTheme.split(',').map(color => color.trim())
+      
+      if (colors.length >= 3) {
+        return {
+          primary: colors[0] || '#3b82f6',
+          secondary: colors[1] || '#64748b',
+          accent: colors[2] || '#f1f5f9',
+          text: colors[3] || '#1e293b',
+          background: colors[4] || '#ffffff'
+        }
       }
     }
     

@@ -75,6 +75,7 @@ interface CatalogFilters {
   codigoRubro?: number
   page?: number
   pageSize?: number
+  ordenarPor?: 'precio_asc' | 'precio_desc' | 'nombre_asc' | 'nombre_desc'
 }
 
 class ApiService {

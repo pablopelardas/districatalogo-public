@@ -74,10 +74,11 @@
     </div>
 
     <!-- Categories Section simplificado -->
-    <div v-if="hasCategories" class="bg-white/10 backdrop-blur-sm border-t border-white/10">
+    <div v-if="catalogStore.loadingCategories || hasCategories" class="bg-white/10 backdrop-blur-sm border-t border-white/10">
       <div class="container py-3">
-        <div class="flex gap-2 overflow-x-auto scrollbar-hide">
+        <div class="flex gap-2 overflow-x-auto scrollbar-thin pb-2">
           <button
+            v-if="!catalogStore.loadingCategories"
             class="category-pill"
             :class="{ active: selectedCategory === null }"
             @click="setCategory(null)"
@@ -87,16 +88,21 @@
             <span class="count">({{ totalProducts }})</span>
           </button>
           
-          <button
-            v-for="category in categories.slice(0, 8)"
-            :key="category.id"
-            class="category-pill"
-            :class="{ active: selectedCategory === category.codigo_rubro }"
-            @click="setCategory(category.codigo_rubro)"
-          >
-            <span>{{ category.nombre }}</span>
-            <span class="count">({{ category.count || 0 }})</span>
-          </button>
+          <template v-if="catalogStore.loadingCategories">
+            <CategoryChipSkeleton v-for="i in 7" :key="`chip-skeleton-${i}`" />
+          </template>
+          <template v-else>
+            <button
+              v-for="category in categories"
+              :key="category.id"
+              class="category-pill"
+              :class="{ active: selectedCategory === category.codigo_rubro }"
+              @click="setCategory(category.codigo_rubro)"
+            >
+              <span>{{ category.nombre }}</span>
+              <span class="count">({{ category.product_count || 0 }})</span>
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -109,6 +115,7 @@ import { RouterLink } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { useCatalogStore } from '@/stores/catalog'
 import SearchBar from '@/components/catalog/SearchBar.vue'
+import CategoryChipSkeleton from '@/components/ui/CategoryChipSkeleton.vue'
 import { 
   HeartIcon, 
   ShoppingCartIcon, 
@@ -135,13 +142,13 @@ const hasCategories = computed(() => catalogStore.hasCategories)
 const totalProducts = computed(() => catalogStore.totalCount)
 
 // Methods
-const handleSearch = () => {
-  catalogStore.setSearch(searchQuery.value)
+const handleSearch = async () => {
+  await catalogStore.setSearch(searchQuery.value)
 }
 
-const setCategory = (categoryId: number | null) => {
+const setCategory = async (categoryId: number | null) => {
   selectedCategory.value = categoryId
-  catalogStore.setCategory(categoryId)
+  await catalogStore.setCategory(categoryId)
 }
 
 const handleScroll = () => {

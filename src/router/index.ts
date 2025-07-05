@@ -14,6 +14,12 @@ const router = createRouter({
       component: () => import('../views/Catalog.vue'),
     },
     {
+      path: '/catalog/lista',
+      name: 'CatalogWithPriceList',
+      component: () => import('../views/Catalog.vue'),
+      props: { withPriceList: true },
+    },
+    {
       path: '/category/:code',
       name: 'Category',
       component: () => import('../views/Category.vue'),

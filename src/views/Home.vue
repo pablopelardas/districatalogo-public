@@ -31,11 +31,8 @@
         </RouterLink>
       </div>
       
-      <div v-if="loadingFeatured" class="flex justify-center py-12">
-        <div class="text-center text-white">
-          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Cargando productos destacados...</p>
-        </div>
+      <div v-if="loadingFeatured" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <ProductSkeleton v-for="i in 8" :key="`product-skeleton-${i}`" />
       </div>
       
       <div v-else-if="featuredError" class="text-center py-12">
@@ -60,16 +57,13 @@
     </div>
       
     <!-- Categorías -->
-    <div v-if="hasCategories" class="section">
+    <div v-if="loadingCategories || hasCategories" class="section">
       <div class="section-header">
         <h2 class="text-2xl font-bold text-white">Categorías</h2>
       </div>
       
-      <div v-if="loadingCategories" class="flex justify-center py-12">
-        <div class="text-center text-white">
-          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Cargando categorías...</p>
-        </div>
+      <div v-if="loadingCategories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <CategorySkeleton v-for="i in 8" :key="`category-skeleton-${i}`" />
       </div>
       
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -159,7 +153,8 @@ import { useCatalogStore } from '@/stores/catalog'
 import { ArrowRightIcon, ChatBubbleLeftRightIcon, PhoneIcon, EnvelopeIcon } from '@heroicons/vue/24/outline'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProductCard from '@/components/catalog/ProductCard.vue'
-import LoadingSpinner from '@/components/ui/Loading.vue'
+import CategorySkeleton from '@/components/ui/CategorySkeleton.vue'
+import ProductSkeleton from '@/components/ui/ProductSkeleton.vue'
 
 // Stores
 const companyStore = useCompanyStore()
@@ -203,23 +198,12 @@ const adjustColorBrightness = (color: string, percent: number) => {
 
 // Initialize
 onMounted(async () => {
-  // Initialize company data
-  await companyStore.init()
-  
-  // Set page title
+  // Set page title (company and categories are already initialized in App.vue)
   companyStore.updateTitle('Inicio')
   
-  // Load featured products and categories in parallel
-  const promises = []
-  
-  if (!hasFeaturedProducts.value) {
-    promises.push(loadFeaturedProducts())
+  // Load only featured products (categories are loaded in App.vue)
+  if (!hasFeaturedProducts.value && !catalogStore.loadingFeatured) {
+    await loadFeaturedProducts()
   }
-  
-  if (!hasCategories.value) {
-    promises.push(loadCategories())
-  }
-  
-  await Promise.all(promises)
 })
 </script>

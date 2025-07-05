@@ -21,6 +21,7 @@ export const useCatalogStore = defineStore('catalog', () => {
   const searchQuery = ref('')
   const selectedPriceList = ref<number | null>(null)
   const showFeaturedOnly = ref(false)
+  const sortBy = ref<'precio_asc' | 'precio_desc' | 'nombre_asc' | 'nombre_desc' | null>('nombre_asc')
   
   // Loading states
   const loadingProducts = ref(false)
@@ -43,10 +44,10 @@ export const useCatalogStore = defineStore('catalog', () => {
   
   const currentFilters = computed((): CatalogFilters => ({
     listaPrecioId: selectedPriceList.value || undefined,
-    categoria: searchQuery.value || undefined,
     busqueda: searchQuery.value || undefined,
     destacados: showFeaturedOnly.value || undefined,
     codigoRubro: selectedCategory.value || undefined,
+    ordenarPor: sortBy.value || undefined,
     page: currentPage.value,
     pageSize: pageSize.value
   }))
@@ -82,10 +83,7 @@ export const useCatalogStore = defineStore('catalog', () => {
         currentPage.value = response.data.page
         pageSize.value = response.data.page_size
         
-        // Update categories if they come with the response
-        if (response.data.categorias && response.data.categorias.length > 0) {
-          categories.value = response.data.categorias
-        }
+        // Categories should only be managed by fetchCategories(), not overwritten here
       }
     } catch (err) {
       productsError.value = err instanceof Error ? err.message : 'Error loading products'
@@ -161,25 +159,46 @@ export const useCatalogStore = defineStore('catalog', () => {
   }
 
   // Filter actions
-  const setCategory = (categoryId: number | null) => {
+  const setCategory = async (categoryId: number | null) => {
     selectedCategory.value = categoryId
     currentPage.value = 1 // Reset to first page when filtering
+    await fetchProducts() // Fetch products with new filter
   }
 
-  const setSearch = (query: string) => {
+  const setSearch = async (query: string) => {
     searchQuery.value = query
     currentPage.value = 1 // Reset to first page when searching
+    await fetchProducts() // Fetch products with new search
   }
 
-  const setPriceList = (priceListId: number | null) => {
+  const setPriceList = async (priceListId: number | null) => {
     selectedPriceList.value = priceListId
     currentPage.value = 1 // Reset to first page when changing price list
+    await fetchProducts() // Fetch products with new price list
   }
 
-  const setFeaturedOnly = (featured: boolean) => {
+  const setFeaturedOnly = async (featured: boolean) => {
     showFeaturedOnly.value = featured
     currentPage.value = 1
+    await fetchProducts()
   }
+
+  const setSortBy = async (sort: 'precio_asc' | 'precio_desc' | 'nombre_asc' | 'nombre_desc' | null) => {
+    sortBy.value = sort
+    currentPage.value = 1
+    await fetchProducts()
+  }
+
+  const clearFilters = async () => {
+    selectedCategory.value = null
+    searchQuery.value = ''
+    showFeaturedOnly.value = false
+    selectedPriceList.value = null
+    sortBy.value = 'nombre_asc' // Mantener ordenamiento alfabético por defecto
+    currentPage.value = 1
+    await fetchProducts()
+  }
+
 
   // Pagination actions
   const nextPage = () => {
@@ -200,13 +219,6 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   }
 
-  // Clear filters
-  const clearFilters = () => {
-    selectedCategory.value = null
-    searchQuery.value = ''
-    showFeaturedOnly.value = false
-    currentPage.value = 1
-  }
 
   // Initialize with company's default page size
   const initWithCompany = () => {
@@ -230,6 +242,7 @@ export const useCatalogStore = defineStore('catalog', () => {
     searchQuery,
     selectedPriceList,
     showFeaturedOnly,
+    sortBy,
     
     // Loading states
     loadingProducts,
@@ -262,6 +275,7 @@ export const useCatalogStore = defineStore('catalog', () => {
     setSearch,
     setPriceList,
     setFeaturedOnly,
+    setSortBy,
     nextPage,
     prevPage,
     goToPage,
