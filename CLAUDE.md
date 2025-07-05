@@ -54,9 +54,46 @@ This is a **documentation-only repository** for the Districatalogo Public API - 
 
 ## Development Notes
 
-### No Build Process
-This is a documentation repository with no code to build, test, or lint.
+### Vue 3 + TypeScript + Tailwind CSS Application
+This is now a full-featured Vue 3 application for the public catalog.
+
+### Build & Development Commands
+```bash
+# Install dependencies
+npm install
+
+# Development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+```
+
+### Environment Variables
+Copy `.env.example` to `.env.local` and configure:
+- `VITE_API_URL` - API base URL (default: http://localhost:7000)
+- `VITE_EMPRESA_ID` - Company ID for development (default: 1)
+
+### Key Architecture Features
+- **Dynamic Theming**: CSS custom properties updated via company configuration
+- **Multi-tenant**: Automatic company resolution by subdomain in production
+- **Responsive Design**: Mobile-first with Tailwind CSS
+- **State Management**: Pinia stores for company and catalog data
+- **TypeScript**: Full type safety throughout the application
 
 ### Files Structure
+- `src/components/` - Vue components (layout, catalog, ui)
+- `src/stores/` - Pinia state management
+- `src/services/` - API service layer
+- `src/composables/` - Vue composables (theme, etc.)
+- `src/views/` - Route components
 - `docs/` - API documentation and testing resources
-- `.claude/` - Claude Code configuration (permissions for file operations)
