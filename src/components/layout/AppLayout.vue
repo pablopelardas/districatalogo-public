@@ -1,10 +1,11 @@
+<!-- AppLayout.vue actualizado con mejor estructura -->
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-screen flex flex-col" :style="{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-primary-dark))` }">
     <!-- Header -->
     <AppHeader />
     
-    <!-- Main Content -->
-    <main class="flex-1 py-8">
+    <!-- Main Content con container apropiado -->
+    <main class="flex-1">
       <div class="container">
         <slot />
       </div>

@@ -1,34 +1,26 @@
+<!-- SearchBar.vue - Simplificado -->
 <template>
   <div class="relative">
-    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
+    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+      <MagnifyingGlassIcon class="h-5 w-5 text-gray-500" />
     </div>
     
     <input
       v-model="localValue"
       type="text"
       :placeholder="placeholder"
-      class="input-glass block w-full pl-10 pr-10"
+      class="w-full pl-11 pr-11 py-3 rounded-xl bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
       @keyup.enter="handleSearch"
       @input="handleInput"
     />
     
-    <div class="absolute inset-y-0 right-0 flex items-center">
+    <div class="absolute inset-y-0 right-0 pr-2 flex items-center">
       <button
         v-if="localValue"
         @click="clearSearch"
-        class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-        title="Limpiar búsqueda"
+        class="p-2 text-gray-500 hover:text-gray-700 transition-colors"
       >
-        <XMarkIcon class="h-4 w-4" />
-      </button>
-      
-      <button
-        @click="handleSearch"
-        class="p-2 text-gray-400 hover:text-[--theme-primary] transition-colors"
-        title="Buscar"
-      >
-        <MagnifyingGlassIcon class="h-4 w-4" />
+        <XMarkIcon class="h-5 w-5" />
       </button>
     </div>
   </div>
@@ -46,7 +38,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Buscar...',
+  placeholder: 'Buscar productos...',
   debounceMs: 500
 })
 
@@ -60,29 +52,23 @@ const emit = defineEmits<{
 const localValue = ref(props.modelValue)
 let debounceTimer: NodeJS.Timeout | null = null
 
-// Watch for prop changes
+// Watch
 watch(() => props.modelValue, (newValue) => {
   localValue.value = newValue
 })
 
 // Methods
 const handleInput = () => {
-  // Clear existing timer
-  if (debounceTimer) {
-    clearTimeout(debounceTimer)
-  }
+  if (debounceTimer) clearTimeout(debounceTimer)
   
-  // Update model value immediately for UI responsiveness
   emit('update:modelValue', localValue.value)
   
-  // Debounce the search
   debounceTimer = setTimeout(() => {
     handleSearch()
   }, props.debounceMs)
 }
 
 const handleSearch = () => {
-  // Clear any pending debounce
   if (debounceTimer) {
     clearTimeout(debounceTimer)
     debounceTimer = null

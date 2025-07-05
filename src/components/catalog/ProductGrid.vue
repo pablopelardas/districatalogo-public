@@ -1,74 +1,103 @@
+<!-- ProductGrid.vue - Grid de productos con mejor spacing -->
 <template>
-  <div class="section">
-    <!-- Stats -->
-    <div class="stats-container mb-6">
-      <span>{{ totalCount }} producto{{ totalCount !== 1 ? 's' : '' }} encontrado{{ totalCount !== 1 ? 's' : '' }}</span>
-    </div>
-
-    <!-- Filtros activos -->
-    <div v-if="hasActiveFilters" class="info-container mb-6">
-      <div class="flex flex-wrap gap-3 items-center">
-        <span class="text-white text-sm font-medium">Filtros activos:</span>
+  <div class="py-6">
+    <!-- Toolbar simplificado -->
+    <div class="mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <!-- Contador y filtros activos -->
+        <div class="flex items-center gap-4">
+          <h2 class="text-xl font-semibold text-white">
+            {{ totalCount }} productos
+          </h2>
+          
+          <!-- Filtros activos inline -->
+          <div v-if="hasActiveFilters" class="flex items-center gap-2">
+            <span 
+              v-if="selectedCategory" 
+              class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
+            >
+              {{ getCategoryName(selectedCategory) }}
+              <button @click="clearCategory" class="hover:opacity-70">
+                <XMarkIcon class="h-3 w-3" />
+              </button>
+            </span>
+            
+            <span 
+              v-if="searchQuery" 
+              class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
+            >
+              "{{ searchQuery }}"
+              <button @click="clearSearch" class="hover:opacity-70">
+                <XMarkIcon class="h-3 w-3" />
+              </button>
+            </span>
+          </div>
+        </div>
         
-        <span v-if="selectedCategory" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white shadow-soft" :style="{ background: 'var(--theme-secondary)' }">
-          {{ getCategoryName(selectedCategory) }}
-          <button @click="clearCategory" class="ml-2 hover:text-white/80 transition-colors">
-            <XMarkIcon class="h-3 w-3" />
+        <!-- Controles -->
+        <div class="flex items-center gap-3">
+          <select class="px-4 py-2 rounded-lg bg-white/90 text-sm font-medium">
+            <option>Más relevantes</option>
+            <option>Precio: menor a mayor</option>
+            <option>Precio: mayor a menor</option>
+            <option>Más nuevos</option>
+          </select>
+          
+          <div class="flex gap-1 bg-white/10 rounded-lg p-1">
+            <button 
+              @click="viewMode = 'grid'"
+              :class="viewMode === 'grid' ? 'bg-white/20' : ''"
+              class="p-2 rounded transition-all"
+            >
+              <ViewGridIcon class="h-5 w-5 text-white" />
+            </button>
+            <button 
+              @click="viewMode = 'list'"
+              :class="viewMode === 'list' ? 'bg-white/20' : ''"
+              class="p-2 rounded transition-all"
+            >
+              <ListBulletIcon class="h-5 w-5 text-white" />
+            </button>
+          </div>
+          
+          <button class="btn btn-secondary flex items-center gap-2">
+            <AdjustmentsHorizontalIcon class="h-5 w-5" />
+            <span class="hidden sm:inline">Filtros</span>
           </button>
-        </span>
-        
-        <span v-if="searchQuery" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white shadow-soft" :style="{ background: 'var(--theme-secondary)' }">
-          "{{ searchQuery }}"
-          <button @click="clearSearch" class="ml-2 hover:text-white/80 transition-colors">
-            <XMarkIcon class="h-3 w-3" />
-          </button>
-        </span>
-        
-        <span v-if="showFeaturedOnly" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white shadow-soft" :style="{ background: 'var(--theme-secondary)' }">
-          Destacados
-          <button @click="clearFeatured" class="ml-2 hover:text-white/80 transition-colors">
-            <XMarkIcon class="h-3 w-3" />
-          </button>
-        </span>
-        
-        <button @click="clearAllFilters" class="text-xs text-white hover:text-white/80 underline font-medium transition-colors">
-          Limpiar todos
-        </button>
+        </div>
       </div>
     </div>
 
     <!-- Content -->
     <div>
       <!-- Loading state -->
-      <div v-if="loading" class="flex justify-center py-16">
-        <div class="text-center text-white">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p class="text-lg">Cargando productos...</p>
+      <div v-if="loading" class="flex justify-center py-20">
+        <div class="text-center">
+          <div class="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-white">Cargando productos...</p>
         </div>
       </div>
       
       <!-- Error state -->
-      <div v-else-if="error" class="text-center py-16">
-        <div class="info-container max-w-md mx-auto">
-          <div class="text-white mb-4 text-lg">{{ error }}</div>
-          <button
-            @click="retry"
-            class="btn btn-secondary"
-          >
+      <div v-else-if="error" class="flex justify-center py-20">
+        <div class="glass max-w-md p-8 rounded-xl text-center">
+          <ExclamationTriangleIcon class="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p class="text-gray-800 mb-4">{{ error }}</p>
+          <button @click="retry" class="btn btn-primary">
             Intentar nuevamente
           </button>
         </div>
       </div>
       
       <!-- Empty state -->
-      <div v-else-if="!hasProducts" class="text-center py-16">
-        <div class="info-container max-w-md mx-auto">
-          <div class="text-white mb-4 text-lg">No se encontraron productos</div>
-          <button
-            v-if="hasActiveFilters"
-            @click="clearAllFilters"
-            class="btn btn-secondary"
-          >
+      <div v-else-if="!hasProducts" class="flex justify-center py-20">
+        <div class="glass max-w-md p-8 rounded-xl text-center">
+          <ShoppingBagIcon class="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">No se encontraron productos</h3>
+          <p class="text-gray-600 mb-4">
+            {{ hasActiveFilters ? 'Intenta con otros filtros' : 'No hay productos disponibles' }}
+          </p>
+          <button v-if="hasActiveFilters" @click="clearAllFilters" class="btn btn-primary">
             Limpiar filtros
           </button>
         </div>
@@ -76,16 +105,21 @@
       
       <!-- Products grid -->
       <div v-else>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        <div 
+          :class="viewMode === 'grid' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
+            : 'space-y-4'"
+        >
           <ProductCard
             v-for="product in products"
             :key="product.codigo"
             :product="product"
+            :view-mode="viewMode"
           />
         </div>
         
         <!-- Paginación -->
-        <div v-if="totalPages > 1" class="flex justify-center">
+        <div v-if="totalPages > 1" class="flex justify-center mt-10">
           <div class="glass px-6 py-4 rounded-xl">
             <Pagination
               :current-page="currentPage"
@@ -104,10 +138,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
 import { useCompanyStore } from '@/stores/company'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { 
+  XMarkIcon,
+  Squares2X2Icon as ViewGridIcon,
+  ListBulletIcon,
+  AdjustmentsHorizontalIcon,
+  ExclamationTriangleIcon,
+  ShoppingBagIcon
+} from '@heroicons/vue/24/outline'
 import ProductCard from './ProductCard.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 
@@ -115,10 +156,11 @@ import Pagination from '@/components/ui/Pagination.vue'
 const catalogStore = useCatalogStore()
 const companyStore = useCompanyStore()
 
-// Local state - sincronizar con el store
+// State
 const searchQuery = ref('')
 const selectedCategory = ref<number | null>(null)
 const showFeaturedOnly = ref(false)
+const viewMode = ref<'grid' | 'list'>('grid')
 
 // Computed
 const products = computed(() => catalogStore.products)
@@ -155,12 +197,6 @@ const clearSearch = () => {
   fetchProducts()
 }
 
-const clearFeatured = () => {
-  showFeaturedOnly.value = false
-  catalogStore.setFeaturedOnly(false)
-  fetchProducts()
-}
-
 const clearAllFilters = () => {
   searchQuery.value = ''
   selectedCategory.value = null
@@ -192,7 +228,6 @@ const retry = () => {
   fetchProducts()
 }
 
-// Watch for URL changes to sync filters
 const syncFiltersFromStore = () => {
   searchQuery.value = catalogStore.searchQuery
   selectedCategory.value = catalogStore.selectedCategory
@@ -204,7 +239,6 @@ onMounted(async () => {
   await companyStore.init()
   catalogStore.initWithCompany()
   
-  // Load categories and initial products
   if (!catalogStore.hasCategories) {
     await catalogStore.fetchCategories()
   }
