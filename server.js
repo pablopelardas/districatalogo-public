@@ -1,10 +1,14 @@
-const express = require('express');
-const path = require('path');
-const compression = require('compression');
-const history = require('connect-history-api-fallback');
+import express from 'express';
+import path from 'path';
+import compression from 'compression';
+import history from 'connect-history-api-fallback';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Compresión gzip
 app.use(compression());
