@@ -268,6 +268,13 @@ watch([
   syncFiltersFromStore()
 }, { immediate: true })
 
+// Watch for products to be loaded and clear initial loading
+watch(() => catalogStore.products, (newProducts) => {
+  if (newProducts.length > 0 || (!catalogStore.loadingProducts && catalogStore.products.length === 0)) {
+    initialLoading.value = false
+  }
+}, { immediate: true })
+
 // Initialize
 onMounted(async () => {
   // Company and categories are already initialized in App.vue
