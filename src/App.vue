@@ -19,7 +19,7 @@ onMounted(async () => {
   if (!catalogStore.hasCategories) {
     await catalogStore.fetchCategories()
   }
-  
+
   // Small delay to ensure theme is applied
   setTimeout(() => {
     appReady.value = true
@@ -78,9 +78,11 @@ onMounted(async () => {
   </Transition>
 
   <!-- Main App Content -->
-  <Transition name="app-content">
-    <RouterView v-if="appReady" />
-  </Transition>
+  <router-view v-if="appReady" v-slot="{ Component }">
+    <transition name="app-content">
+      <component :is="Component" />
+    </transition>
+  </router-view>
 </template>
 
 <style scoped>

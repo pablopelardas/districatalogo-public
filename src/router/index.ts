@@ -6,18 +6,18 @@ const router = createRouter({
     {
       path: '/',
       name: 'Home',
-      component: () => import('../views/Home.vue'),
+      component: () => import('../views/Catalog.vue'),
+    },
+    {
+      path: '/catalog/lista/:listId',
+      name: 'CatalogWithPriceList',
+      component: () => import('../views/Catalog.vue'),
+      props: true,
     },
     {
       path: '/catalog',
       name: 'Catalog',
       component: () => import('../views/Catalog.vue'),
-    },
-    {
-      path: '/catalog/lista',
-      name: 'CatalogWithPriceList',
-      component: () => import('../views/Catalog.vue'),
-      props: { withPriceList: true },
     },
     {
       path: '/category/:code',
@@ -38,7 +38,7 @@ const router = createRouter({
       redirect: '/',
     },
   ],
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(_, __, savedPosition) {
     if (savedPosition) {
       return savedPosition
     } else {

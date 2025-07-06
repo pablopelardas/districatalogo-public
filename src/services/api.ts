@@ -68,7 +68,7 @@ interface Company {
 }
 
 interface CatalogFilters {
-  listaPrecioId?: number
+  listaPrecioCodigo?: string
   categoria?: string
   busqueda?: string
   destacados?: boolean
@@ -124,7 +124,7 @@ class ApiService {
   }
 
   // Generic fetch method
-  private async fetch<T>(endpoint: string, params: Record<string, any> = {}): Promise<ApiResponse<T>> {
+  private async fetch<T>(endpoint: string, params: Record<string, any> = {}, signal?: AbortSignal): Promise<ApiResponse<T>> {
     try {
       const queryString = this.buildQueryString(params)
       const url = `${this.baseUrl}${endpoint}${queryString}`
@@ -134,7 +134,8 @@ class ApiService {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
-        }
+        },
+        signal
       })
 
       if (!response.ok) {
@@ -155,8 +156,8 @@ class ApiService {
   }
 
   // Get catalog with filters
-  async getCatalog(filters: CatalogFilters = {}): Promise<ApiResponse<CatalogResponse>> {
-    return this.fetch<CatalogResponse>('/api/catalog', filters)
+  async getCatalog(filters: CatalogFilters = {}, signal?: AbortSignal): Promise<ApiResponse<CatalogResponse>> {
+    return this.fetch<CatalogResponse>('/api/catalog', filters, signal)
   }
 
   // Get categories
@@ -165,15 +166,15 @@ class ApiService {
   }
 
   // Get product by code
-  async getProduct(codigo: string, listaPrecioId?: number): Promise<ApiResponse<Product>> {
-    const params = listaPrecioId ? { listaPrecioId } : {}
+  async getProduct(codigo: string, listaPrecioCodigo?: string): Promise<ApiResponse<Product>> {
+    const params = listaPrecioCodigo ? { listaPrecioCodigo } : {}
     return this.fetch<Product>(`/api/catalog/producto/${codigo}`, params)
   }
 
   // Get featured products
-  async getFeaturedProducts(listaPrecioId?: number, limit: number = 10): Promise<ApiResponse<{ productos: Product[] }>> {
+  async getFeaturedProducts(listaPrecioCodigo?: string, limit: number = 10): Promise<ApiResponse<{ productos: Product[] }>> {
     const params = {
-      listaPrecioId,
+      listaPrecioCodigo,
       limit
     }
     return this.fetch<{ productos: Product[] }>('/api/catalog/destacados', params)

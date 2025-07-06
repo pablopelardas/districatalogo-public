@@ -13,10 +13,14 @@
     
     <!-- Footer -->
     <AppFooter />
+    
+    <!-- Floating WhatsApp Button -->
+    <FloatingWhatsApp />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from './AppHeader.vue'
 import AppFooter from './AppFooter.vue'
+import FloatingWhatsApp from '@/components/ui/FloatingWhatsApp.vue'
 </script>

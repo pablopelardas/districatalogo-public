@@ -1,10 +1,10 @@
 <!-- AppHeader.vue - Header mejorado con mejor spacing -->
 <template>
-  <header class="sticky top-0 z-50 transition-all duration-300" :class="{ 'shadow-lg': isScrolled }">
+  <header class="transition-all duration-300" :class="{ 'shadow-lg': isScrolled }">
     <!-- Main Header -->
     <div class="glass-header">
       <div class="container">
-        <div class="flex items-center justify-between py-6">
+        <div class="flex items-center justify-between py-4">
           <!-- Logo y nombre con mejor proporción -->
           <RouterLink to="/" class="group flex items-center gap-3">
             <div class="relative">
@@ -34,34 +34,10 @@
               <p v-if="company?.razon_social" class="text-sm opacity-80">{{ company.razon_social }}</p>
             </div>
           </RouterLink>
-
-          <!-- Badge y acciones -->
-          <div class="flex items-center gap-4">
-            <div 
-              class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-medium"
-              :style="{ background: 'var(--theme-secondary)' }"
-            >
-              <SparklesIcon class="h-4 w-4" />
-              CATÁLOGO ONLINE
-            </div>
-            
-            <!-- Iconos de acción móvil -->
-            <div class="flex items-center gap-2 md:hidden">
-              <button class="p-2 text-white/80 hover:text-white">
-                <HeartIcon class="h-5 w-5" />
-              </button>
-              <button class="p-2 text-white/80 hover:text-white relative">
-                <ShoppingCartIcon class="h-5 w-5" />
-                <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  {{ cartCount }}
-                </span>
-              </button>
-            </div>
-          </div>
         </div>
 
         <!-- Search Bar con mejor padding -->
-        <div class="pb-4">
+        <div class="pb-6">
           <div class="max-w-xl mx-auto">
             <SearchBar 
               v-model="searchQuery"
@@ -73,25 +49,27 @@
       </div>
     </div>
 
-    <!-- Categories Section simplificado -->
-    <div v-if="catalogStore.loadingCategories || hasCategories" class="bg-white/10 backdrop-blur-sm border-t border-white/10">
-      <div class="container py-3">
-        <div class="flex gap-2 overflow-x-auto scrollbar-thin pb-2">
-          <button
-            v-if="!catalogStore.loadingCategories"
-            class="category-pill"
-            :class="{ active: selectedCategory === null }"
-            @click="setCategory(null)"
-          >
-            <ViewGridIcon class="h-4 w-4" />
-            <span>Todos</span>
-            <span class="count">({{ totalProducts }})</span>
-          </button>
-          
-          <template v-if="catalogStore.loadingCategories">
-            <CategoryChipSkeleton v-for="i in 7" :key="`chip-skeleton-${i}`" />
+    <!-- Categories Section expandido -->
+    <div v-if="catalogStore.loadingCategories || catalogStore.loadingProducts || (hasCategories && catalogStore.hasProducts)" class="py-4 bg-white/10 backdrop-blur-sm border-t border-white/10">
+      <div class="container py-6">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <!-- Show skeleton when loading categories OR products (search) -->
+          <template v-if="catalogStore.loadingCategories || catalogStore.loadingProducts">
+            <CategoryChipSkeleton v-for="i in 12" :key="`chip-skeleton-${i}`" />
           </template>
+          
+          <!-- Show actual categories when not loading -->
           <template v-else>
+            <button
+              class="category-pill"
+              :class="{ active: selectedCategory === null }"
+              @click="setCategory(null)"
+            >
+              <ViewGridIcon class="h-4 w-4" />
+              <span>Todos</span>
+              <span class="count">({{ totalProducts }})</span>
+            </button>
+            
             <button
               v-for="category in categories"
               :key="category.id"
@@ -110,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { useCatalogStore } from '@/stores/catalog'
@@ -137,9 +115,15 @@ const cartCount = ref(3) // Ejemplo
 const company = computed(() => companyStore.company)
 const companyName = computed(() => companyStore.companyName)
 const companyLogo = computed(() => companyStore.companyLogo)
-const categories = computed(() => catalogStore.categories)
+const categories = computed(() => catalogStore.displayCategories)
 const hasCategories = computed(() => catalogStore.hasCategories)
-const totalProducts = computed(() => catalogStore.totalCount)
+const totalProducts = computed(() => {
+  // If there are active filters/search, show current filtered count
+  // Otherwise show original total count
+  return catalogStore.searchQuery || catalogStore.selectedCategory || catalogStore.showFeaturedOnly
+    ? catalogStore.totalCount
+    : catalogStore.originalTotalCount
+})
 
 // Methods
 const handleSearch = async () => {
@@ -155,7 +139,20 @@ const handleScroll = () => {
   isScrolled.value = window.scrollY > 10
 }
 
+// Watch for store changes to sync UI with store state
+watch(() => catalogStore.selectedCategory, (newCategory) => {
+  selectedCategory.value = newCategory
+})
+
+watch(() => catalogStore.searchQuery, (newQuery) => {
+  searchQuery.value = newQuery
+})
+
 onMounted(() => {
+  // Sync initial state from store
+  selectedCategory.value = catalogStore.selectedCategory
+  searchQuery.value = catalogStore.searchQuery
+  
   window.addEventListener('scroll', handleScroll)
 })
 
@@ -167,7 +164,7 @@ onUnmounted(() => {
 <style scoped>
  @reference "tailwindcss";
 .category-pill {
-  @apply flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-medium whitespace-nowrap transition-all hover:bg-white/20;
+  @apply flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 text-white text-sm font-medium transition-all hover:bg-white/20 justify-center min-h-[2.5rem] cursor-pointer;
 }
 
 .category-pill.active {

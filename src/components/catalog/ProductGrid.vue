@@ -7,7 +7,7 @@
         <!-- Contador y filtros activos -->
         <div class="flex items-center gap-4">
           <h2 class="text-xl font-semibold text-white">
-            {{ totalCount }} productos
+            {{ displayProductCount }} productos
           </h2>
           
           <!-- Filtros activos inline -->
@@ -17,7 +17,7 @@
               class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
             >
               {{ getCategoryName(selectedCategory) }}
-              <button @click="clearCategory" class="hover:opacity-70">
+              <button @click="clearCategory" class="hover:opacity-70 cursor-pointer">
                 <XMarkIcon class="h-3 w-3" />
               </button>
             </span>
@@ -27,7 +27,7 @@
               class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
             >
               "{{ searchQuery }}"
-              <button @click="clearSearch" class="hover:opacity-70">
+              <button @click="clearSearch" class="hover:opacity-70 cursor-pointer">
                 <XMarkIcon class="h-3 w-3" />
               </button>
             </span>
@@ -39,7 +39,7 @@
           <select 
             v-model="sortOrder"
             @change="handleSortChange"
-            class="px-4 py-2 rounded-lg bg-white/90 text-gray-800 text-sm font-medium border-0 focus:ring-2 focus:ring-white/50 transition-all"
+            class="px-4 py-2 rounded-lg bg-white/90 text-gray-800 text-sm font-medium border-0 focus:ring-2 focus:ring-white/50 transition-all cursor-pointer"
           >
             <option value="nombre_asc">Alfabéticamente A-Z</option>
             <option value="nombre_desc">Alfabéticamente Z-A</option>
@@ -51,14 +51,14 @@
             <button 
               @click="viewMode = 'grid'"
               :class="viewMode === 'grid' ? 'bg-white/20' : ''"
-              class="p-2 rounded transition-all"
+              class="p-2 rounded transition-all cursor-pointer"
             >
               <ViewGridIcon class="h-5 w-5 text-white" />
             </button>
             <button 
               @click="viewMode = 'list'"
               :class="viewMode === 'list' ? 'bg-white/20' : ''"
-              class="p-2 rounded transition-all"
+              class="p-2 rounded transition-all cursor-pointer"
             >
               <ListBulletIcon class="h-5 w-5 text-white" />
             </button>
@@ -85,7 +85,7 @@
         <div class="glass max-w-md p-8 rounded-xl text-center">
           <ExclamationTriangleIcon class="h-12 w-12 text-red-500 mx-auto mb-4" />
           <p class="text-gray-800 mb-4">{{ error }}</p>
-          <button @click="retry" class="btn btn-primary">
+          <button @click="retry" class="btn btn-primary cursor-pointer">
             Intentar nuevamente
           </button>
         </div>
@@ -99,7 +99,7 @@
           <p class="text-gray-600 mb-4">
             {{ hasActiveFilters ? 'Intenta con otros filtros' : 'No hay productos disponibles' }}
           </p>
-          <button v-if="hasActiveFilters" @click="clearAllFilters" class="btn btn-primary">
+          <button v-if="hasActiveFilters" @click="clearAllFilters" class="btn btn-primary cursor-pointer">
             Limpiar filtros
           </button>
         </div>
@@ -119,8 +119,8 @@
             :view-mode="viewMode"
           />
         </div>
-        
-        <!-- Paginación -->
+      </div>
+      <!-- Paginación -->
         <div v-if="totalPages > 1" class="flex justify-center mt-10">
           <div class="glass px-6 py-4 rounded-xl">
             <Pagination
@@ -134,13 +134,15 @@
             />
           </div>
         </div>
-      </div>
+        <div v-else class="text-center mt-6 text-xl font-semibold text-white">
+          Mostrando {{ totalCount }} productos
+        </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
 import { useCompanyStore } from '@/stores/company'
 import { 
@@ -156,7 +158,6 @@ import Pagination from '@/components/ui/Pagination.vue'
 
 // Stores
 const catalogStore = useCatalogStore()
-const companyStore = useCompanyStore()
 
 // State
 const searchQuery = ref('')
@@ -174,6 +175,9 @@ const hasProducts = computed(() => catalogStore.hasProducts)
 const currentPage = computed(() => catalogStore.currentPage)
 const totalPages = computed(() => catalogStore.totalPages)
 const totalCount = computed(() => catalogStore.totalCount)
+
+// Display the current filtered count (what's actually being shown)
+const displayProductCount = computed(() => catalogStore.totalCount)
 const hasNext = computed(() => catalogStore.hasNextPage)
 const hasPrev = computed(() => catalogStore.hasPrevPage)
 
@@ -193,7 +197,7 @@ const isLoading = computed(() => loading.value || initialLoading.value)
 
 // Methods
 const getCategoryName = (categoryId: number) => {
-  const category = catalogStore.getCategoryByCode.value(categoryId)
+  const category = catalogStore.getCategoryByCode(categoryId)
   return category?.nombre || 'Categoría'
 }
 
@@ -227,8 +231,9 @@ const prevPage = () => {
   fetchProducts()
 }
 
-const goToPage = (page: number) => {
-  catalogStore.goToPage(page)
+const goToPage = (page: number | string) => {
+  const pageNum = typeof page === 'string' ? parseInt(page) : page
+  catalogStore.goToPage(pageNum)
   fetchProducts()
 }
 
@@ -250,13 +255,24 @@ const syncFiltersFromStore = () => {
   searchQuery.value = catalogStore.searchQuery
   selectedCategory.value = catalogStore.selectedCategory
   showFeaturedOnly.value = catalogStore.showFeaturedOnly
-  sortOrder.value = catalogStore.sortBy || ''
+  sortOrder.value = catalogStore.sortBy || 'nombre_asc'
 }
+
+// Watch for store changes to keep UI in sync
+watch([
+  () => catalogStore.searchQuery,
+  () => catalogStore.selectedCategory,
+  () => catalogStore.showFeaturedOnly,
+  () => catalogStore.sortBy
+], () => {
+  syncFiltersFromStore()
+}, { immediate: true })
 
 // Initialize
 onMounted(async () => {
   // Company and categories are already initialized in App.vue
+  // Force sync from store first
   syncFiltersFromStore()
-  await fetchProducts()
+  // Don't fetch products here - let Catalog.vue handle it
 })
 </script>

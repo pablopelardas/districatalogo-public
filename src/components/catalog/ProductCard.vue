@@ -10,8 +10,8 @@
     <div :class="viewMode === 'list' ? 'w-32 h-32' : 'aspect-square p-4'">
       <div class="w-full h-full bg-white rounded-lg flex items-center justify-center">
         <img 
-          v-if="product.imagen" 
-          :src="product.imagen" 
+          v-if="product.imagen_urls && product.imagen_urls.length > 0" 
+          :src="product.imagen_urls[0]" 
           :alt="product.nombre"
           class="max-w-full max-h-full object-contain"
         />
@@ -30,9 +30,13 @@
       </div>
       
       <!-- Actions -->
-      <button class="w-full btn btn-primary">
+      <a class="w-full btn btn-primary" 
+         :href="`/producto/${product.codigo}`"
+         :class="viewMode === 'list' ? 'w-full' : ''"
+        
+      >
         Ver detalles
-      </button>
+      </a>
     </div>
   </article>
 </template>

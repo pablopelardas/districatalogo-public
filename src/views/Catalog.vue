@@ -1,4 +1,4 @@
-<!-- Catalog.vue - Soporte para lista de precios -->
+<!-- Catalog.vue - Soporte para lista de precios y query params -->
 <template>
   <AppLayout>
     <ProductGrid />
@@ -6,30 +6,133 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { useCatalogStore } from '@/stores/catalog'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProductGrid from '@/components/catalog/ProductGrid.vue'
 
 interface Props {
-  withPriceList?: boolean
+  listId?: string
 }
 
 const props = defineProps<Props>()
+const route = useRoute()
+const router = useRouter()
 const companyStore = useCompanyStore()
 const catalogStore = useCatalogStore()
 
+// Function to update URL with current state
+const updateURL = () => {
+  const query: Record<string, string> = {}
+  
+  if (catalogStore.searchQuery) query.q = catalogStore.searchQuery
+  if (catalogStore.selectedCategory) query.categoria = catalogStore.selectedCategory.toString()
+  if (catalogStore.sortBy && catalogStore.sortBy !== 'nombre_asc') query.orden = catalogStore.sortBy
+  if (catalogStore.currentPage > 1) query.page = catalogStore.currentPage.toString()
+  if (catalogStore.showFeaturedOnly) query.destacados = 'true'
+  
+  // Only update if query actually changed
+  const currentQuery = JSON.stringify(route.query)
+  const newQuery = JSON.stringify(query)
+  
+  if (currentQuery !== newQuery) {
+    router.replace({ query })
+  }
+}
+
+// Function to restore state from URL
+const restoreFromURL = async () => {
+  const query = route.query
+  
+  // Restore search
+  if (query.q && typeof query.q === 'string') {
+    catalogStore.searchQuery = query.q
+  }
+  
+  // Restore category
+  if (query.categoria && typeof query.categoria === 'string') {
+    const categoryId = parseInt(query.categoria)
+    if (!isNaN(categoryId)) {
+      catalogStore.selectedCategory = categoryId
+    }
+  }
+  
+  // Restore sort
+  if (query.orden && typeof query.orden === 'string') {
+    const validSorts = ['precio_asc', 'precio_desc', 'nombre_asc', 'nombre_desc']
+    if (validSorts.includes(query.orden)) {
+      catalogStore.sortBy = query.orden as any
+    }
+  }
+  
+  // Restore page
+  if (query.page && typeof query.page === 'string') {
+    const page = parseInt(query.page)
+    if (!isNaN(page) && page > 0) {
+      catalogStore.currentPage = page
+    }
+  }
+  
+  // Restore featured
+  if (query.destacados === 'true') {
+    catalogStore.showFeaturedOnly = true
+  }
+}
+
+// Watch for store changes and update URL
+watch([
+  () => catalogStore.searchQuery,
+  () => catalogStore.selectedCategory, 
+  () => catalogStore.sortBy,
+  () => catalogStore.currentPage,
+  () => catalogStore.showFeaturedOnly
+], () => {
+  updateURL()
+}, { deep: true })
+
+// Watch for route changes (back/forward navigation)
+watch(() => route.query, async (newQuery, oldQuery) => {
+  // Only respond to external navigation (not our own updates)
+  if (JSON.stringify(newQuery) !== JSON.stringify(oldQuery)) {
+    await restoreFromURL()
+    await catalogStore.fetchProducts()
+  }
+}, { deep: true })
+
+// Handle browser back/forward
+const handlePopState = async () => {
+  await restoreFromURL()
+  await catalogStore.fetchProducts()
+}
+
 onMounted(async () => {
+  console.log('Catalog mounted with props:', props)
+  console.log('Route query:', route.query)
+  
+  // Add popstate listener for browser navigation
+  window.addEventListener('popstate', handlePopState)
+  
   await companyStore.init()
   
-  if (props.withPriceList) {
-    // Set a default price list ID for lista route
-    // This could be configured based on your business logic
-    await catalogStore.setPriceList(1)
-    companyStore.updateTitle('Catálogo - Lista de Precios')
+  // Handle price list from route parameter (without fetching)
+  if (props.listId) {
+    catalogStore.selectedPriceList = props.listId
+    companyStore.updateTitle(`Catálogo - Lista ${props.listId}`)
   } else {
     companyStore.updateTitle('Catálogo')
   }
+  
+  // Restore state from URL query params
+  await restoreFromURL()
+  
+  // Fetch products with restored state - single call
+  await catalogStore.fetchProducts()
+})
+
+onUnmounted(() => {
+  // Clean up event listener
+  window.removeEventListener('popstate', handlePopState)
 })
 </script>
