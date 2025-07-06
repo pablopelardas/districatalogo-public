@@ -81,6 +81,9 @@ const restoreFromURL = async () => {
   }
 }
 
+// Flag to prevent double fetch when we're updating URL from store changes
+let isUpdatingFromStore = false
+
 // Watch for store changes and update URL
 watch([
   () => catalogStore.searchQuery,
@@ -89,13 +92,20 @@ watch([
   () => catalogStore.currentPage,
   () => catalogStore.showFeaturedOnly
 ], () => {
+  isUpdatingFromStore = true
   updateURL()
+  // Reset flag after a short delay to allow URL update to complete
+  setTimeout(() => {
+    isUpdatingFromStore = false
+  }, 100)
 }, { deep: true })
 
 // Watch for route changes (back/forward navigation)
 watch(() => route.query, async (newQuery, oldQuery) => {
   // Only respond to external navigation (not our own updates)
-  if (JSON.stringify(newQuery) !== JSON.stringify(oldQuery)) {
+  // Skip if we're currently updating from store changes
+  if (JSON.stringify(newQuery) !== JSON.stringify(oldQuery) && !isUpdatingFromStore) {
+    console.log('Route query changed externally, restoring from URL')
     await restoreFromURL()
     await catalogStore.fetchProducts()
   }
