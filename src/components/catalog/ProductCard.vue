@@ -29,14 +29,7 @@
         <span v-if="product.lista" class="text-sm text-gray-500">{{ product.lista }}</span>
       </div>
       
-      <!-- Actions -->
-      <a class="w-full btn btn-primary" 
-         :href="`/producto/${product.codigo}`"
-         :class="viewMode === 'list' ? 'w-full' : ''"
-        
-      >
-        Ver detalles
-      </a>
+      <!-- Actions removed - no detail view needed for now -->
     </div>
   </article>
 </template>
