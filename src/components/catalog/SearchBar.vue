@@ -50,7 +50,7 @@ const emit = defineEmits<{
 
 // Local state
 const localValue = ref(props.modelValue)
-let debounceTimer: NodeJS.Timeout | null = null
+let debounceTimer: number | null = null
 
 // Watch
 watch(() => props.modelValue, (newValue) => {

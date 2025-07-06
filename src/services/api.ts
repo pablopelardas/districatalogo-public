@@ -92,7 +92,7 @@ class ApiService {
       this.empresaId = parseInt(import.meta.env.VITE_EMPRESA_ID || '1')
     } else {
       // Production: use current subdomain
-      this.baseUrl = `https://${window.location.hostname}`
+      this.baseUrl = import.meta.env.VITE_API_URL || 'https://api.districatalogo.com'
     }
   }
 

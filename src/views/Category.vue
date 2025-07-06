@@ -81,7 +81,7 @@ const categoryCode = computed(() => {
 
 const category = computed(() => {
   if (!categoryCode.value) return null
-  return catalogStore.getCategoryByCode.value(categoryCode.value)
+  return catalogStore.getCategoryByCode(categoryCode.value)
 })
 
 const categoryName = computed(() => {

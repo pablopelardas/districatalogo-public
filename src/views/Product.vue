@@ -72,7 +72,7 @@ const product = computed(() => catalogStore.currentProduct)
 
 const productCategory = computed(() => {
   if (!product.value?.codigo_rubro) return null
-  return catalogStore.getCategoryByCode.value(product.value.codigo_rubro)
+  return catalogStore.getCategoryByCode(product.value.codigo_rubro)
 })
 
 const relatedProducts = computed(() => {
