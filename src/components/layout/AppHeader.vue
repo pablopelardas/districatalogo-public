@@ -164,11 +164,17 @@ onUnmounted(() => {
 <style scoped>
  @reference "tailwindcss";
 .category-pill {
-  @apply flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 text-white text-sm font-medium transition-all hover:bg-white/20 justify-center min-h-[2.5rem] cursor-pointer;
+  @apply flex items-center gap-2 px-3 py-2 rounded-full text-white text-sm font-medium transition-all justify-center min-h-[2.5rem] cursor-pointer;
+  background: var(--theme-secondary);
+}
+
+.category-pill:hover {
+  filter: brightness(1.1);
 }
 
 .category-pill.active {
-  @apply bg-white/25;
+  filter: brightness(1.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .category-pill .count {

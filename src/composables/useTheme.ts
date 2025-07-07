@@ -142,6 +142,56 @@ export function useTheme() {
   // Computed properties for current theme
   const currentTheme = computed(() => themeColors.value)
   
+  // Function to calculate color luminance
+  const getLuminance = (hex: string): number => {
+    const cleanHex = hex.replace('#', '')
+    const r = parseInt(cleanHex.substring(0, 2), 16) / 255
+    const g = parseInt(cleanHex.substring(2, 4), 16) / 255
+    const b = parseInt(cleanHex.substring(4, 6), 16) / 255
+    
+    // Apply gamma correction
+    const sRGB = [r, g, b].map(c => {
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    })
+    
+    // Calculate relative luminance
+    return 0.2126 * sRGB[0] + 0.7152 * sRGB[1] + 0.0722 * sRGB[2]
+  }
+  
+  // Function to calculate contrast ratio between two colors
+  const getContrastRatio = (color1: string, color2: string): number => {
+    const lum1 = getLuminance(color1)
+    const lum2 = getLuminance(color2)
+    const brightest = Math.max(lum1, lum2)
+    const darkest = Math.min(lum1, lum2)
+    return (brightest + 0.05) / (darkest + 0.05)
+  }
+  
+  // Function to get optimal text color for a background
+  const getOptimalTextColor = (backgroundColor: string): string => {
+    // Fallback to simple brightness calculation if hex parsing fails
+    try {
+      const cleanHex = backgroundColor.replace('#', '')
+      if (cleanHex.length !== 6) {
+        return '#ffffff' // Default to white for invalid colors
+      }
+      
+      const r = parseInt(cleanHex.substring(0, 2), 16)
+      const g = parseInt(cleanHex.substring(2, 4), 16)
+      const b = parseInt(cleanHex.substring(4, 6), 16)
+      
+      // Calculate perceived brightness using YIQ formula
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000
+      
+      // If brightness is greater than 128 (mid-point), use black text
+      // Otherwise use white text
+      return brightness > 128 ? '#000000' : '#ffffff'
+    } catch (error) {
+      console.warn('Error calculating text color for:', backgroundColor)
+      return '#ffffff' // Default to white on error
+    }
+  }
+
   const isDarkMode = computed(() => {
     const bgColor = themeColors.value.background
     // Simple check if background is dark
@@ -153,9 +203,17 @@ export function useTheme() {
     return brightness < 128
   })
   
+  // Computed for secondary color text
+  const secondaryTextColor = computed(() => {
+    return getOptimalTextColor(themeColors.value.secondary)
+  })
+  
   return {
     themeColors: currentTheme,
     isDarkMode,
+    secondaryTextColor,
+    getOptimalTextColor,
+    getContrastRatio,
     setThemeFromCompany,
     setFavicon,
     applyTheme,

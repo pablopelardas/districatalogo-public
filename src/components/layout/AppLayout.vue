@@ -16,6 +16,9 @@
     
     <!-- Floating WhatsApp Button -->
     <FloatingWhatsApp />
+    
+    <!-- Scroll to Top Button -->
+    <ScrollToTop />
   </div>
 </template>
 
@@ -23,4 +26,5 @@
 import AppHeader from './AppHeader.vue'
 import AppFooter from './AppFooter.vue'
 import FloatingWhatsApp from '@/components/ui/FloatingWhatsApp.vue'
+import ScrollToTop from '@/components/ui/ScrollToTop.vue'
 </script>

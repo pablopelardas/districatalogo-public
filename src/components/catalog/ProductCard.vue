@@ -1,35 +1,38 @@
-<!-- ProductCard.vue - Ejemplo de tarjeta de producto -->
 <template>
   <article 
     :class="[
-      'card-product group',
-      viewMode === 'list' ? 'flex gap-4 p-4' : 'flex flex-col'
+      'card-product group rounded-lg shadow-sm bg-white',
+      viewMode === 'list' 
+        ? 'flex items-center gap-4 px-3 py-2' 
+        : 'flex flex-col items-center p-3'
     ]"
   >
     <!-- Imagen -->
-    <div :class="viewMode === 'list' ? 'w-32 h-32' : 'aspect-square p-4'">
-      <div class="w-full h-full bg-white rounded-lg flex items-center justify-center">
+    <div :class="viewMode === 'list' ? 'w-24 h-24' : 'w-full aspect-square mb-2'">
+      <div class="w-full h-full bg-gray-50 rounded-md flex items-center justify-center">
         <img 
-          v-if="product.imagen_urls && product.imagen_urls.length > 0" 
+          v-if="product.imagen_urls?.length" 
           :src="product.imagen_urls[0]" 
           :alt="product.nombre"
-          class="max-w-full max-h-full object-contain"
+          class="max-h-full max-w-full object-contain"
         />
-        <ShoppingBagIcon v-else class="h-12 w-12 text-gray-300" />
+        <ShoppingBagIcon v-else class="h-10 w-10 text-gray-300" />
       </div>
     </div>
-    
+
     <!-- Contenido -->
-    <div :class="viewMode === 'list' ? 'flex-1' : 'p-4 pt-0'">
-      <h3 class="font-medium text-gray-800 mb-2 line-clamp-2">{{ product.nombre }}</h3>
-      
-      <!-- Precio -->
-      <div class="flex items-baseline gap-2 mb-3">
-        <span class="text-2xl font-bold text-gray-900">${{ product.precio }}</span>
-        <span v-if="product.lista" class="text-sm text-gray-500">{{ product.lista }}</span>
+    <div :class="viewMode === 'list' ? 'flex-1' : 'w-full text-center'">
+      <h3 class="text-sm font-medium text-gray-800 mb-1 line-clamp-2 leading-snug">
+        {{ product.nombre }}
+      </h3>
+
+      <div class="text-base font-semibold text-gray-900">
+        ${{ product.precio }}
       </div>
-      
-      <!-- Actions removed - no detail view needed for now -->
+
+      <div v-if="product.lista" class="text-xs text-gray-500 mt-0.5">
+        {{ product.lista }}
+      </div>
     </div>
   </article>
 </template>
