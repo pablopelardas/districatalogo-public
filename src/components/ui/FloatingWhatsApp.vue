@@ -5,7 +5,7 @@
       :href="whatsappUrl"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed top-1/2 right-6 transform -translate-y-1/2 z-50 group"
+      class="fixed bottom-6 left-6 z-50 group"
       :aria-label="`Contactar por WhatsApp a ${companyName}`"
     >
       <!-- Button -->
@@ -26,10 +26,10 @@
       </div>
       
       <!-- Tooltip -->
-      <div class="absolute top-1/2 right-full mr-3 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+      <div class="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <div class="bg-gray-900 text-white text-sm rounded-lg px-4 py-2 whitespace-nowrap">
           ¡Contáctanos por WhatsApp!
-          <div class="absolute top-1/2 left-full transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-l-4 border-transparent border-l-gray-900"></div>
+          <div class="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
         </div>
       </div>
     </a>
