@@ -80,8 +80,8 @@
               <!-- Category Icon -->
               <span 
                 v-if="category.icono" 
-                class="category-icon"
-                :style="{ background: category.color || 'var(--theme-accent)' }"
+                class="category-icon-text"
+                :style="{ color: category.color || 'var(--theme-accent)' }"
               >
                 {{ category.icono }}
               </span>
@@ -191,8 +191,8 @@ onUnmounted(() => {
   @apply text-xs opacity-70;
 }
 
-.category-icon {
-  @apply w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0;
-  font-size: 12px;
+.category-icon-text {
+  @apply text-lg font-bold flex-shrink-0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 </style>
