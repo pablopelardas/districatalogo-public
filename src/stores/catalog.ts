@@ -45,8 +45,31 @@ export const useCatalogStore = defineStore('catalog', () => {
   const productError = ref<string | null>(null)
 
   // Getters
-  const hasProducts = computed(() => products.value.length > 0)
+  const hasProducts = computed(() => filteredProducts.value.length > 0)
   const hasCategories = computed(() => categories.value.length > 0)
+  
+  // Client-side filtered products when there's a search query
+  const filteredProducts = computed(() => {
+    // If there's no search query, return all products
+    if (!searchQuery.value) {
+      return products.value
+    }
+    
+    // If there's a search query, filter by category on client-side
+    if (selectedCategory.value) {
+      return products.value.filter(product => product.codigo_rubro === selectedCategory.value)
+    }
+    
+    return products.value
+  })
+  
+  // Update product count based on filtered products
+  const filteredProductsCount = computed(() => {
+    if (!searchQuery.value) {
+      return totalCount.value
+    }
+    return filteredProducts.value.length
+  })
   const hasFeaturedProducts = computed(() => featuredProducts.value.length > 0)
   const hasNextPage = computed(() => currentPage.value < totalPages.value)
   const hasPrevPage = computed(() => currentPage.value > 1)
@@ -280,7 +303,11 @@ export const useCatalogStore = defineStore('catalog', () => {
       await fetchOriginalTotalCount()
     }
     
-    await fetchProducts() // Fetch products with new filter
+    // Only fetch products if there's no active search query
+    // When searching, the category filter will be applied client-side
+    if (!searchQuery.value) {
+      await fetchProducts() // Fetch products with new filter
+    }
   }
 
   const setSearch = async (query: string) => {
@@ -367,6 +394,7 @@ export const useCatalogStore = defineStore('catalog', () => {
   return {
     // State
     products,
+    filteredProducts,
     featuredProducts,
     categories,
     filteredCategories,
@@ -375,6 +403,7 @@ export const useCatalogStore = defineStore('catalog', () => {
     currentPage,
     pageSize,
     totalCount,
+    filteredProductsCount,
     totalPages,
     originalTotalCount,
     selectedCategory,

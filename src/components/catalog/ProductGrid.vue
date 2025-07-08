@@ -110,7 +110,7 @@
         <div 
           :class="viewMode === 'grid' 
             ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
-            : 'space-y-4'"
+            : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'"
         >
           <ProductCard
             v-for="product in products"
@@ -168,7 +168,7 @@ const initialLoading = ref(true)
 const sortOrder = ref('nombre_asc')
 
 // Computed
-const products = computed(() => catalogStore.products)
+const products = computed(() => catalogStore.filteredProducts)
 const loading = computed(() => catalogStore.loadingProducts)
 const error = computed(() => catalogStore.productsError)
 const hasProducts = computed(() => catalogStore.hasProducts)
@@ -177,7 +177,9 @@ const totalPages = computed(() => catalogStore.totalPages)
 const totalCount = computed(() => catalogStore.totalCount)
 
 // Display the current filtered count (what's actually being shown)
-const displayProductCount = computed(() => catalogStore.totalCount)
+const displayProductCount = computed(() => 
+  catalogStore.searchQuery ? catalogStore.filteredProductsCount : catalogStore.totalCount
+)
 const hasNext = computed(() => catalogStore.hasNextPage)
 const hasPrev = computed(() => catalogStore.hasPrevPage)
 

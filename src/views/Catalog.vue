@@ -139,6 +139,11 @@ onMounted(async () => {
   
   // Fetch products with restored state - single call
   await catalogStore.fetchProducts()
+  
+  // If we have filters from URL, fetch original total count in parallel (doesn't affect loading state)
+  if (catalogStore.selectedCategory || catalogStore.searchQuery || catalogStore.showFeaturedOnly) {
+    catalogStore.fetchOriginalTotalCount() // No await - parallel execution
+  }
 })
 
 onUnmounted(() => {

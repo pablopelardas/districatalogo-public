@@ -1,22 +1,32 @@
 <template>
   <div class="flex items-center justify-between px-4 py-3 rounded-lg" :style="{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }">
     <!-- Mobile -->
-    <div class="flex flex-1 justify-between sm:hidden">
+    <div class="flex items-center justify-between sm:hidden">
+      <!-- Prev Arrow -->
       <button
         @click="$emit('prev')"
         :disabled="!hasPrev"
-        class="mobile-nav-btn"
-        :style="{ background: 'var(--theme-secondary)', color: secondaryTextColor }"
+        class="mobile-arrow-btn"
+        :style="{ color: hasPrev ? 'var(--theme-primary)' : 'var(--theme-text)', opacity: hasPrev ? 1 : 0.3 }"
       >
-        Anterior
+        <ChevronLeftIcon class="w-6 h-6" />
       </button>
+      
+      <!-- Page indicator with more space -->
+      <div class="flex-1 text-center">
+        <div class="text-lg font-semibold" :style="{ color: 'var(--theme-text)' }">
+          Página <span class="text-xl" :style="{ color: 'var(--theme-primary)' }">{{ currentPage }}</span> de <span class="text-xl" :style="{ color: 'var(--theme-primary)' }">{{ totalPages }}</span>
+        </div>
+      </div>
+      
+      <!-- Next Arrow -->
       <button
         @click="$emit('next')"
         :disabled="!hasNext"
-        class="mobile-nav-btn"
-        :style="{ background: 'var(--theme-secondary)', color: secondaryTextColor }"
+        class="mobile-arrow-btn"
+        :style="{ color: hasNext ? 'var(--theme-primary)' : 'var(--theme-text)', opacity: hasNext ? 1 : 0.3 }"
       >
-        Siguiente
+        <ChevronRightIcon class="w-6 h-6" />
       </button>
     </div>
 
@@ -211,5 +221,22 @@ const visiblePages = computed(() => {
 
 .page-number.active {
   transform: scale(1.05);
+}
+
+.mobile-arrow-btn {
+  @apply p-3 rounded-full transition duration-200 cursor-pointer;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-arrow-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.mobile-arrow-btn:disabled {
+  @apply cursor-not-allowed;
 }
 </style>

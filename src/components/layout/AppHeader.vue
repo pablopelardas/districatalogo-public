@@ -50,11 +50,11 @@
     </div>
 
     <!-- Categories Section expandido -->
-    <div v-if="catalogStore.loadingCategories || catalogStore.loadingProducts || (hasCategories && catalogStore.hasProducts)" class="py-4 bg-white/10 backdrop-blur-sm border-t border-white/10">
+    <div v-if="catalogStore.loadingCategories || (hasCategories && catalogStore.hasProducts)" class="py-4 bg-white/10 backdrop-blur-sm border-t border-white/10">
       <div class="container py-6">
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-          <!-- Show skeleton when loading categories OR products (search) -->
-          <template v-if="catalogStore.loadingCategories || catalogStore.loadingProducts">
+          <!-- Show skeleton only when loading categories OR when searching (loadingProducts + searchQuery) -->
+          <template v-if="catalogStore.loadingCategories || (catalogStore.loadingProducts && catalogStore.searchQuery)">
             <CategoryChipSkeleton v-for="i in 12" :key="`chip-skeleton-${i}`" />
           </template>
           
@@ -77,6 +77,15 @@
               :class="{ active: selectedCategory === category.codigo_rubro }"
               @click="setCategory(category.codigo_rubro)"
             >
+              <!-- Category Icon -->
+              <span 
+                v-if="category.icono" 
+                class="category-icon"
+                :style="{ background: category.color || 'var(--theme-accent)' }"
+              >
+                {{ category.icono }}
+              </span>
+              
               <span>{{ category.nombre }}</span>
               <span class="count">({{ category.product_count || 0 }})</span>
             </button>
@@ -118,11 +127,12 @@ const companyLogo = computed(() => companyStore.companyLogo)
 const categories = computed(() => catalogStore.displayCategories)
 const hasCategories = computed(() => catalogStore.hasCategories)
 const totalProducts = computed(() => {
-  // If there are active filters/search, show current filtered count
-  // Otherwise show original total count
-  return catalogStore.searchQuery || catalogStore.selectedCategory || catalogStore.showFeaturedOnly
-    ? catalogStore.totalCount
-    : catalogStore.originalTotalCount
+  // If there's a search query, show the total results from search
+  if (catalogStore.searchQuery) {
+    return catalogStore.totalCount
+  }
+  // Otherwise, show original total count (for category filtering without search)
+  return catalogStore.originalTotalCount || catalogStore.totalCount
 })
 
 // Methods
@@ -179,5 +189,10 @@ onUnmounted(() => {
 
 .category-pill .count {
   @apply text-xs opacity-70;
+}
+
+.category-icon {
+  @apply w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0;
+  font-size: 12px;
 }
 </style>

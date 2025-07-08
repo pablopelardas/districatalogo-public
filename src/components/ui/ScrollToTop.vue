@@ -10,7 +10,7 @@
       <div class="relative">
         <div 
           class="flex items-center justify-center w-14 h-14 rounded-full shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-300"
-          :style="{ background: 'var(--theme-primary)' }"
+          :style="{ background: 'var(--theme-accent)' }"
         >
           <ChevronUpIcon class="w-8 h-8 text-white stroke-2" />
         </div>
@@ -18,7 +18,7 @@
         <!-- Subtle pulse animation -->
         <div 
           class="absolute inset-0 rounded-full animate-ping opacity-30" 
-          :style="{ background: 'var(--theme-primary)' }"
+          :style="{ background: 'var(--theme-accent)' }"
         ></div>
       </div>
       
