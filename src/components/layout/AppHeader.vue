@@ -145,6 +145,7 @@ const setCategory = async (categoryId: number | null) => {
   await catalogStore.setCategory(categoryId)
 }
 
+
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 10
 }

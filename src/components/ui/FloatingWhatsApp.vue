@@ -5,7 +5,7 @@
       :href="whatsappUrl"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed bottom-6 left-6 z-50 group"
+      class="fixed bottom-6 left-6 z-40 group"
       :aria-label="`Contactar por WhatsApp a ${companyName}`"
     >
       <!-- Button -->

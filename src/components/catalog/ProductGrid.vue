@@ -32,14 +32,14 @@
           
           <div class="flex gap-1 bg-white/10 rounded-lg p-1">
             <button 
-              @click="viewMode = 'grid'"
+              @click="setViewMode('grid')"
               :class="viewMode === 'grid' ? 'bg-white/20' : ''"
               class="p-2 rounded transition-all cursor-pointer"
             >
               <ViewGridIcon class="h-5 w-5 text-white" />
             </button>
             <button 
-              @click="viewMode = 'list'"
+              @click="setViewMode('list')"
               :class="viewMode === 'list' ? 'bg-white/20' : ''"
               class="p-2 rounded transition-all cursor-pointer"
             >
@@ -126,6 +126,7 @@
             :key="product.codigo"
             :product="product"
             :view-mode="viewMode"
+            @open-cart="openAddToCartModal"
           />
         </div>
       </div>
@@ -144,6 +145,14 @@
         </div>
       </div>
     </div>
+    
+    <!-- Add to Cart Modal -->
+    <AddToCartModal
+      :is-open="showAddToCartModal"
+      :product="selectedProduct"
+      @close="closeAddToCartModal"
+      @added="onProductAdded"
+    />
   </div>
 </template>
 
@@ -160,6 +169,7 @@ import {
 import ProductCard from './ProductCard.vue'
 import ProductSkeleton from '@/components/ui/ProductSkeleton.vue'
 import Pagination from '@/components/ui/Pagination.vue'
+import AddToCartModal from '@/components/cart/AddToCartModal.vue'
 
 // Stores
 const catalogStore = useCatalogStore()
@@ -168,9 +178,23 @@ const catalogStore = useCatalogStore()
 const searchQuery = ref('')
 const selectedCategory = ref<number | null>(null)
 const showFeaturedOnly = ref(false)
-const viewMode = ref<'grid' | 'list'>('grid')
+// Load view mode from localStorage or default to 'grid'
+const getStoredViewMode = (): 'grid' | 'list' => {
+  try {
+    const stored = localStorage.getItem('catalog-view-mode')
+    return (stored === 'grid' || stored === 'list') ? stored : 'grid'
+  } catch {
+    return 'grid'
+  }
+}
+
+const viewMode = ref<'grid' | 'list'>(getStoredViewMode())
 const initialLoading = ref(true)
 const sortOrder = ref('nombre_asc')
+
+// Cart modal state
+const showAddToCartModal = ref(false)
+const selectedProduct = ref(null)
 
 // Computed
 const products = computed(() => catalogStore.filteredProducts)
@@ -203,6 +227,15 @@ const showEmptyState = computed(() =>
 const isLoading = computed(() => loading.value || initialLoading.value)
 
 // Methods
+const setViewMode = (mode: 'grid' | 'list') => {
+  viewMode.value = mode
+  try {
+    localStorage.setItem('catalog-view-mode', mode)
+  } catch (error) {
+    console.warn('Could not save view mode to localStorage:', error)
+  }
+}
+
 const getCategoryName = (categoryId: number) => {
   const category = catalogStore.getCategoryByCode(categoryId)
   return category?.nombre || 'Categoría'
@@ -256,6 +289,22 @@ const goToPage = (page: number | string) => {
   catalogStore.goToPage(pageNum)
   fetchProducts()
   setTimeout(scrollToProducts, 100)
+}
+
+// Cart modal methods
+const openAddToCartModal = (product: any) => {
+  selectedProduct.value = product
+  showAddToCartModal.value = true
+}
+
+const closeAddToCartModal = () => {
+  showAddToCartModal.value = false
+  selectedProduct.value = null
+}
+
+const onProductAdded = (product: any, quantity: number) => {
+  console.log(`Added ${quantity} of ${product.nombre} to cart`)
+  // Could show a toast notification here
 }
 
 const fetchProducts = async () => {
