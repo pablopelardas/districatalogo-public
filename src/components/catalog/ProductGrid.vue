@@ -2,35 +2,18 @@
 <template>
   <div class="py-6">
     <!-- Toolbar simplificado -->
-    <div class="mb-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <!-- Contador y filtros activos -->
-        <div class="flex items-center gap-4">
+    <div class="mb-6 products-toolbar">
+      <!-- Primera fila: Contador con página y controles -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <!-- Contador y página -->
+        <div class="flex items-center gap-6">
           <h2 class="text-xl font-semibold text-white">
             {{ displayProductCount }} productos
           </h2>
           
-          <!-- Filtros activos inline -->
-          <div v-if="hasActiveFilters" class="flex items-center gap-2">
-            <span 
-              v-if="selectedCategory" 
-              class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
-            >
-              {{ getCategoryName(selectedCategory) }}
-              <button @click="clearCategory" class="hover:opacity-70 cursor-pointer">
-                <XMarkIcon class="h-3 w-3" />
-              </button>
-            </span>
-            
-            <span 
-              v-if="searchQuery" 
-              class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
-            >
-              "{{ searchQuery }}"
-              <button @click="clearSearch" class="hover:opacity-70 cursor-pointer">
-                <XMarkIcon class="h-3 w-3" />
-              </button>
-            </span>
+          <!-- Page indicator -->
+          <div v-if="totalPages > 1" class="text-white/80 text-sm font-medium">
+            Página {{ currentPage }} de {{ totalPages }}
           </div>
         </div>
         
@@ -65,10 +48,36 @@
           </div>
         </div>
       </div>
+      
+      <!-- Segunda fila: Filtros activos -->
+      <div v-if="hasActiveFilters" class="flex items-center gap-2">
+        <span class="text-sm text-white/70">Filtros activos:</span>
+        
+        <span 
+          v-if="selectedCategory" 
+          class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
+        >
+          {{ getCategoryName(selectedCategory) }}
+          <button @click="clearCategory" class="hover:opacity-70 cursor-pointer">
+            <XMarkIcon class="h-3 w-3" />
+          </button>
+        </span>
+        
+        <span 
+          v-if="searchQuery" 
+          class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
+        >
+          "{{ searchQuery }}"
+          <button @click="clearSearch" class="hover:opacity-70 cursor-pointer">
+            <XMarkIcon class="h-3 w-3" />
+          </button>
+        </span>
+        
+      </div>
     </div>
 
     <!-- Content -->
-    <div>
+    <div class="products-grid-section">
       <!-- Loading state -->
       <div v-if="isLoading">
         <div 
@@ -121,22 +130,19 @@
         </div>
       </div>
       <!-- Paginación -->
-        <div v-if="totalPages > 1" class="flex justify-center mt-10">
-          <div class="glass px-6 py-4 rounded-xl">
-            <Pagination
-              :current-page="currentPage"
-              :total-pages="totalPages"
-              :has-next="hasNext"
-              :has-prev="hasPrev"
-              @next="nextPage"
-              @prev="prevPage"
-              @goto="goToPage"
-            />
-          </div>
+      <div v-if="totalPages > 1" class="flex justify-center mt-10">
+        <div class="glass px-6 py-4 rounded-xl">
+          <Pagination
+            :current-page="currentPage"
+            :total-pages="totalPages"
+            :has-next="hasNext"
+            :has-prev="hasPrev"
+            @next="nextPage"
+            @prev="prevPage"
+            @goto="goToPage"
+          />
         </div>
-        <div v-else class="text-center mt-6 text-xl font-semibold text-white">
-          Mostrando {{ totalCount }} productos
-        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -144,7 +150,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
-import { useCompanyStore } from '@/stores/company'
 import { 
   XMarkIcon,
   Squares2X2Icon as ViewGridIcon,
@@ -223,20 +228,34 @@ const clearAllFilters = () => {
   fetchProducts()
 }
 
+const scrollToProducts = () => {
+  // Find the toolbar section (header with filters and counter)
+  const toolbarSection = document.querySelector('.products-toolbar')
+  if (toolbarSection) {
+    // Scroll instantly to the toolbar with some offset to show it nicely
+    toolbarSection.scrollIntoView({ behavior: 'instant', block: 'start' })
+    // Add a small offset to show a bit more context
+    window.scrollBy(0, -20)
+  }
+}
+
 const nextPage = () => {
   catalogStore.nextPage()
   fetchProducts()
+  setTimeout(scrollToProducts, 100)
 }
 
 const prevPage = () => {
   catalogStore.prevPage()
   fetchProducts()
+  setTimeout(scrollToProducts, 100)
 }
 
 const goToPage = (page: number | string) => {
   const pageNum = typeof page === 'string' ? parseInt(page) : page
   catalogStore.goToPage(pageNum)
   fetchProducts()
+  setTimeout(scrollToProducts, 100)
 }
 
 const fetchProducts = async () => {

@@ -29,8 +29,12 @@
             </div>
           </div>
           
-          <p class="text-sm text-white/70 mb-4">
+          <p class="text-sm text-white/70 mb-2">
             Tu catálogo online confiable. Encuentra todos nuestros productos disponibles las 24 horas.
+          </p>
+          
+          <p class="text-xs text-white/60 mb-4 italic">
+            * Los precios mostrados están sujetos a cambios por parte del vendedor. Los precios en esta página web pueden no reflejar los precios finales del local.
           </p>
           
           <!-- Social links - Solo mostrar si existen -->
