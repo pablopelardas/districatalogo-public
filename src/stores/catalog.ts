@@ -294,9 +294,11 @@ export const useCatalogStore = defineStore('catalog', () => {
   }
 
   // Filter actions
-  const setCategory = async (categoryId: number | null) => {
+  const setCategory = async (categoryId: number | null, resetPage: boolean = true) => {
     selectedCategory.value = categoryId
-    currentPage.value = 1 // Reset to first page when filtering
+    if (resetPage) {
+      currentPage.value = 1 // Reset to first page when filtering
+    }
     
     // If we don't have original total count, fetch it first
     if (originalTotalCount.value === 0) {
@@ -310,9 +312,11 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   }
 
-  const setSearch = async (query: string) => {
+  const setSearch = async (query: string, resetPage: boolean = true) => {
     searchQuery.value = query
-    currentPage.value = 1 // Reset to first page when searching
+    if (resetPage) {
+      currentPage.value = 1 // Reset to first page when searching
+    }
     
     // If we don't have original total count, fetch it first
     if (originalTotalCount.value === 0) {

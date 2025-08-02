@@ -4,7 +4,7 @@
     <!-- Main Header -->
     <div class="glass-header">
       <div class="container">
-        <div class="flex items-center justify-between py-4">
+        <div class="flex items-center justify-between py-8 sm:py-4">
           <!-- Logo y nombre con mejor proporción -->
           <RouterLink to="/" class="group flex items-center gap-3">
             <div class="relative">
@@ -37,11 +37,12 @@
         </div>
 
         <!-- Search Bar con mejor padding -->
-        <div class="pb-6">
+        <div class="pb-10 sm:pb-6">
           <div class="max-w-xl mx-auto">
             <SearchBar 
               v-model="searchQuery"
               @search="handleSearch"
+              @searchWithScroll="handleSearchWithScroll"
               placeholder="¿Qué estás buscando hoy?"
             />
           </div>
@@ -138,6 +139,43 @@ const totalProducts = computed(() => {
 // Methods
 const handleSearch = async () => {
   await catalogStore.setSearch(searchQuery.value)
+}
+
+const handleSearchWithScroll = async () => {
+  await catalogStore.setSearch(searchQuery.value)
+  // Scroll to products after search is complete
+  requestAnimationFrame(() => {
+    const toolbarElement = document.querySelector('.products-toolbar')
+    if (toolbarElement) {
+      const yOffset = 10;
+      const y = toolbarElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      
+      // Custom easing function
+      const easeInOutCubic = (t: number): number => {
+        return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+      };
+      
+      // Animate scroll with 300ms duration
+      const duration = 300;
+      const startY = window.pageYOffset;
+      const distance = y - startY;
+      const startTime = performance.now();
+      
+      const animateScroll = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeInOutCubic(progress);
+        
+        window.scrollTo(0, startY + distance * easedProgress);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animateScroll);
+        }
+      };
+      
+      requestAnimationFrame(animateScroll);
+    }
+  })
 }
 
 const setCategory = async (categoryId: number | null) => {

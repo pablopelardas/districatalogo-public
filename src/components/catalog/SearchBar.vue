@@ -14,11 +14,23 @@
       @input="handleInput"
     />
     
-    <div class="absolute inset-y-0 right-0 pr-2 flex items-center">
+    <div class="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
+      <!-- Search button - always visible -->
       <button
-        v-if="localValue"
+        @click="handleSearch"
+        :class="localValue ? 'text-gray-600 hover:text-gray-800' : 'text-gray-400'"
+        :disabled="!localValue"
+        class="p-2 transition-colors cursor-pointer disabled:cursor-not-allowed"
+        title="Buscar"
+      >
+        <MagnifyingGlassIcon class="h-4 w-4" />
+      </button>
+      <!-- Clear button - always reserve space but only show when there's text -->
+      <button
         @click="clearSearch"
-        class="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+        :class="localValue ? 'text-gray-500 hover:text-gray-700' : 'text-transparent pointer-events-none'"
+        class="p-2 transition-colors cursor-pointer"
+        title="Limpiar búsqueda"
       >
         <XMarkIcon class="h-5 w-5" />
       </button>
@@ -46,6 +58,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   'search': []
+  'searchWithScroll': []
 }>()
 
 // Local state
@@ -58,15 +71,6 @@ watch(() => props.modelValue, (newValue) => {
 })
 
 // Methods
-const handleInput = () => {
-  if (debounceTimer) clearTimeout(debounceTimer)
-  
-  emit('update:modelValue', localValue.value)
-  
-  debounceTimer = setTimeout(() => {
-    handleSearch()
-  }, props.debounceMs)
-}
 
 const handleSearch = () => {
   if (debounceTimer) {
@@ -76,6 +80,18 @@ const handleSearch = () => {
   
   emit('update:modelValue', localValue.value)
   emit('search')
+  emit('searchWithScroll')
+}
+
+const handleInput = () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  
+  emit('update:modelValue', localValue.value)
+  
+  debounceTimer = setTimeout(() => {
+    // Solo search, sin scroll para el input automático
+    emit('search')
+  }, props.debounceMs)
 }
 
 const clearSearch = () => {

@@ -2,7 +2,7 @@
 <template>
   <div class="py-6">
     <!-- Toolbar simplificado -->
-    <div class="mb-6 products-toolbar">
+    <div class="mb-6 pt-6 products-toolbar">
       <!-- Primera fila: Contador con página y controles -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <!-- Contador y página -->
@@ -50,29 +50,44 @@
       </div>
       
       <!-- Segunda fila: Filtros activos -->
-      <div v-if="hasActiveFilters" class="flex items-center gap-2">
-        <span class="text-sm text-white/70">Filtros activos:</span>
+      <div v-if="hasActiveFilters" class="space-y-3">
+        <!-- Categoría destacada -->
+        <div v-if="selectedCategory" class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <span class="text-sm text-white/80 font-medium">Categoría:</span>
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/95 shadow-lg max-w-full">
+            <div class="w-2 h-2 rounded-full" :style="{ background: 'var(--theme-accent)' }"></div>
+            <span class="text-base font-semibold text-gray-800">
+              {{ getCategoryName(selectedCategory) }}
+            </span>
+            <button 
+              @click="clearCategory" 
+              class="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+              title="Quitar filtro de categoría"
+            >
+              <XMarkIcon class="h-4 w-4 text-gray-600" />
+            </button>
+          </div>
+        </div>
         
-        <span 
-          v-if="selectedCategory" 
-          class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
-        >
-          {{ getCategoryName(selectedCategory) }}
-          <button @click="clearCategory" class="hover:opacity-70 cursor-pointer">
-            <XMarkIcon class="h-3 w-3" />
-          </button>
-        </span>
-        
-        <span 
-          v-if="searchQuery" 
-          class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-white/20"
-        >
-          "{{ searchQuery }}"
-          <button @click="clearSearch" class="hover:opacity-70 cursor-pointer">
-            <XMarkIcon class="h-3 w-3" />
-          </button>
-        </span>
-        
+        <!-- Búsqueda activa -->
+        <div v-if="searchQuery" class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <span class="text-sm text-white/80 font-medium">Búsqueda:</span>
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/95 shadow-lg max-w-full">
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span class="text-base font-medium text-gray-800">
+              "{{ searchQuery }}"
+            </span>
+            <button 
+              @click="clearSearch" 
+              class="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+              title="Quitar búsqueda"
+            >
+              <XMarkIcon class="h-4 w-4 text-gray-600" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -195,6 +210,8 @@ const sortOrder = ref('nombre_asc')
 // Cart modal state
 const showAddToCartModal = ref(false)
 const selectedProduct = ref(null)
+const isClearing = ref(false)
+const isInitialMount = ref(true)
 
 // Computed
 const products = computed(() => catalogStore.filteredProducts)
@@ -242,53 +259,90 @@ const getCategoryName = (categoryId: number) => {
 }
 
 const clearCategory = () => {
+  isClearing.value = true
   selectedCategory.value = null
-  catalogStore.setCategory(null)
+  catalogStore.setCategory(null, false) // Don't reset page when clearing
   fetchProducts()
+  // Reset flag after a short delay to allow for state changes
+  setTimeout(() => {
+    isClearing.value = false
+  }, 100)
 }
 
 const clearSearch = () => {
+  isClearing.value = true
   searchQuery.value = ''
-  catalogStore.setSearch('')
+  catalogStore.setSearch('', false) // Don't reset page when clearing
   fetchProducts()
+  // Reset flag after a short delay to allow for state changes
+  setTimeout(() => {
+    isClearing.value = false
+  }, 100)
 }
 
 const clearAllFilters = () => {
+  isClearing.value = true
   searchQuery.value = ''
   selectedCategory.value = null
   showFeaturedOnly.value = false
   catalogStore.clearFilters()
   fetchProducts()
+  // Reset flag after a short delay to allow for state changes
+  setTimeout(() => {
+    isClearing.value = false
+  }, 100)
 }
 
 const scrollToProducts = () => {
-  // Find the toolbar section (header with filters and counter)
-  const toolbarSection = document.querySelector('.products-toolbar')
-  if (toolbarSection) {
-    // Scroll instantly to the toolbar with some offset to show it nicely
-    toolbarSection.scrollIntoView({ behavior: 'instant', block: 'start' })
-    // Add a small offset to show a bit more context
-    window.scrollBy(0, -20)
+  // Find the products toolbar (contains count and sorting)
+  const toolbarElement = document.querySelector('.products-toolbar')
+  if (toolbarElement) {
+    const yOffset = 10; // Offset to hide categories but show toolbar with breathing room
+    const y = toolbarElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    
+    // Use the same fast custom scroll animation
+    const startY = window.pageYOffset;
+    const distance = y - startY;
+    const duration = 300; // Same 300ms for consistency
+    let start: number | null = null;
+    
+    const step = (timestamp: number) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      
+      // Same easing function for consistency
+      const easeInOutCubic = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      
+      window.scrollTo(0, startY + distance * easeInOutCubic);
+      
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+    
+    requestAnimationFrame(step);
   }
 }
 
 const nextPage = () => {
   catalogStore.nextPage()
   fetchProducts()
-  setTimeout(scrollToProducts, 100)
+  requestAnimationFrame(scrollToProducts)
 }
 
 const prevPage = () => {
   catalogStore.prevPage()
   fetchProducts()
-  setTimeout(scrollToProducts, 100)
+  requestAnimationFrame(scrollToProducts)
 }
 
 const goToPage = (page: number | string) => {
   const pageNum = typeof page === 'string' ? parseInt(page) : page
   catalogStore.goToPage(pageNum)
   fetchProducts()
-  setTimeout(scrollToProducts, 100)
+  requestAnimationFrame(scrollToProducts)
 }
 
 // Cart modal methods
@@ -334,8 +388,27 @@ watch([
   () => catalogStore.selectedCategory,
   () => catalogStore.showFeaturedOnly,
   () => catalogStore.sortBy
-], () => {
+], ([newSearch, newCategory, newFeatured, newSort], [oldSearch, oldCategory]) => {
   syncFiltersFromStore()
+  
+  // Scroll to products when category changes (including "TODOS" which is null)
+  // but not when we're clearing filters (user is already viewing products)
+  // and not on initial mount unless there are active filters from URL
+  if (newCategory !== oldCategory && !isClearing.value && !isInitialMount.value) {
+    requestAnimationFrame(() => {
+      scrollToProducts();
+    });
+  } else if (isInitialMount.value && (newCategory !== null || newSearch || newFeatured)) {
+    // Only scroll on initial mount if there are active filters from URL
+    requestAnimationFrame(() => {
+      scrollToProducts();
+    });
+  }
+  
+  // Clear initial mount flag after first watch execution
+  if (isInitialMount.value) {
+    isInitialMount.value = false
+  }
 }, { immediate: true })
 
 // Watch for products to be loaded and clear initial loading

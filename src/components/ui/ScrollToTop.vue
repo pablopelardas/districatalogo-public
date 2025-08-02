@@ -45,10 +45,29 @@ const handleScroll = () => {
 }
 
 const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  })
+  // Use the same fast custom scroll animation
+  const startY = window.scrollY;
+  const distance = -startY;
+  const duration = 300; // Same 300ms for consistency
+  let start: number | null = null;
+  
+  const step = (timestamp: number) => {
+    if (!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    
+    // Same easing function for consistency
+    const easeInOutCubic = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    
+    window.scrollTo(0, startY + distance * easeInOutCubic);
+    
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  };
+  
+  requestAnimationFrame(step);
 }
 
 onMounted(() => {
