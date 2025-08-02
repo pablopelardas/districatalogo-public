@@ -1,5 +1,5 @@
 <template>
-  <div class="carousel-container py-6">
+  <div class="carousel-container py-6 mb-4 md:mb-0">
     <!-- Title -->
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
@@ -38,6 +38,9 @@
       class="relative overflow-hidden rounded-xl"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
     >
       <!-- Products Track -->
       <div 
@@ -52,66 +55,40 @@
             isMobile ? 'w-full' : 'w-1/4'
           ]"
         >
-          <div 
-            class="carousel-card group bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105"
-            @click="openAddToCartModal(product)"
-          >
-            <!-- Image -->
-            <div class="aspect-square bg-gray-50 rounded-t-xl overflow-hidden relative">
-              <img 
-                v-if="product.imagen_urls?.length" 
-                :src="product.imagen_urls[0]" 
-                :alt="product.nombre"
-                class="w-full h-full object-cover"
-              />
-              <div v-else class="w-full h-full flex items-center justify-center">
-                <ShoppingBagIcon class="h-16 w-16 text-gray-300" />
-              </div>
-              
-              <!-- Hover overlay -->
-              <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                <div class="bg-white/90 text-gray-800 px-4 py-2 rounded-lg shadow-lg font-medium">
-                  Agregar a mi lista
-                </div>
-              </div>
-            </div>
-            
-            <!-- Content -->
-            <div class="p-4">
-              <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2 leading-snug min-h-[3rem]">
-                {{ product.nombre }}
-              </h3>
-              
-              <div class="flex items-center justify-between">
-                <div class="text-xl font-bold" :style="{ color: 'var(--theme-accent)' }">
-                  ${{ product.precio }}
-                </div>
-                
-                <button
-                  @click.stop="openAddToCartModal(product)"
-                  class="add-btn w-12 h-12"
-                  :style="{ background: 'var(--theme-accent)' }"
-                  aria-label="Agregar a mi lista"
-                >
-                  <PlusIcon class="w-5 h-5 text-white" />
-                </button>
-              </div>
-            </div>
-          </div>
+          <ProductCard 
+            :product="product"
+            :view-mode="'grid'"
+            @open-cart="openAddToCartModal"
+          />
         </div>
       </div>
     </div>
     
-    <!-- Mobile Navigation Dots -->
-    <div v-if="isMobile && products.length > 1" class="flex justify-center mt-4 gap-2">
+    <!-- Mobile Navigation Indicator -->
+    <div v-if="isMobile && products.length > 1" class="flex justify-center items-center gap-3 mt-4">
       <button
-        v-for="(_, index) in products"
-        :key="index"
-        @click="goToSlide(index)"
-        class="dot cursor-pointer"
-        :class="{ 'active': index === currentIndex }"
-        :aria-label="`Ir al producto ${index + 1}`"
-      ></button>
+        @click="prevSlide"
+        :disabled="currentIndex === 0"
+        class="control-btn w-10 h-10 cursor-pointer"
+        :class="{ 'opacity-50 cursor-not-allowed': currentIndex === 0 }"
+        aria-label="Anterior"
+      >
+        <ChevronLeftIcon class="h-4 w-4" />
+      </button>
+      
+      <div class="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white font-medium">
+        {{ currentIndex + 1 }} / {{ products.length }}
+      </div>
+      
+      <button
+        @click="nextSlide"
+        :disabled="currentIndex >= maxIndex"
+        class="control-btn w-10 h-10 cursor-pointer"
+        :class="{ 'opacity-50 cursor-not-allowed': currentIndex >= maxIndex }"
+        aria-label="Siguiente"
+      >
+        <ChevronRightIcon class="h-4 w-4" />
+      </button>
     </div>
     
     <!-- Desktop Pagination Indicators -->
@@ -130,7 +107,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { ChevronLeftIcon, ChevronRightIcon, ShoppingBagIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import ProductCard from './ProductCard.vue'
 import type { Product } from '@/services/api'
 
 interface Props {
@@ -138,10 +116,12 @@ interface Props {
   products: Product[]
   icon: unknown
   autoplayInterval?: number
+  modalOpen?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  autoplayInterval: 5000
+  autoplayInterval: 5000,
+  modalOpen: false
 })
 
 const emit = defineEmits<{
@@ -152,6 +132,13 @@ const emit = defineEmits<{
 const currentIndex = ref(0)
 const autoplayTimer = ref<number | null>(null)
 const isPaused = ref(false)
+
+// Touch/swipe data
+const touchStartX = ref(0)
+const touchEndX = ref(0)
+const touchStartY = ref(0)
+const touchEndY = ref(0)
+const isSwiping = ref(false)
 
 // Responsive behavior
 const isMobile = ref(false)
@@ -186,10 +173,10 @@ const goToSlide = (index: number) => {
 
 // Autoplay methods
 const startAutoplay = () => {
-  if (props.products.length <= visibleProducts.value) return
+  if (props.products.length <= visibleProducts.value || props.modalOpen) return
   
   autoplayTimer.value = setInterval(() => {
-    if (!isPaused.value) {
+    if (!isPaused.value && !props.modalOpen) {
       nextSlide()
     }
   }, props.autoplayInterval)
@@ -220,6 +207,53 @@ const handleMouseLeave = () => {
   isPaused.value = false
 }
 
+// Touch/swipe handlers
+const handleTouchStart = (event: TouchEvent) => {
+  if (!isMobile.value) return
+  
+  touchStartX.value = event.touches[0].clientX
+  touchStartY.value = event.touches[0].clientY
+  isSwiping.value = true
+  isPaused.value = true // Pause autoplay during swipe
+}
+
+const handleTouchMove = (event: TouchEvent) => {
+  if (!isMobile.value || !isSwiping.value) return
+  
+  touchEndX.value = event.touches[0].clientX
+  touchEndY.value = event.touches[0].clientY
+  
+  // Prevent default scrolling if we're swiping horizontally
+  const deltaX = Math.abs(touchEndX.value - touchStartX.value)
+  const deltaY = Math.abs(touchEndY.value - touchStartY.value)
+  
+  if (deltaX > deltaY && deltaX > 10) {
+    event.preventDefault()
+  }
+}
+
+const handleTouchEnd = () => {
+  if (!isMobile.value || !isSwiping.value) return
+  
+  const deltaX = touchStartX.value - touchEndX.value
+  const deltaY = Math.abs(touchStartY.value - touchEndY.value)
+  const minSwipeDistance = 50
+  
+  // Only trigger swipe if horizontal movement is greater than vertical
+  if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > deltaY) {
+    if (deltaX > 0) {
+      // Swiped left - go to next
+      nextSlide()
+    } else {
+      // Swiped right - go to previous
+      prevSlide()
+    }
+  }
+  
+  isSwiping.value = false
+  isPaused.value = false // Resume autoplay
+}
+
 // Cart modal handler
 const openAddToCartModal = (product: Product) => {
   // Pause autoplay when user interacts
@@ -235,6 +269,19 @@ watch(() => props.products, () => {
   stopAutoplay()
   if (props.products.length > 0) {
     startAutoplay()
+  }
+})
+
+// Watch for modal state changes
+watch(() => props.modalOpen, (isOpen) => {
+  if (isOpen) {
+    // Modal opened - stop autoplay
+    stopAutoplay()
+  } else {
+    // Modal closed - restart autoplay if we have products
+    if (props.products.length > 0) {
+      startAutoplay()
+    }
   }
 })
 
@@ -274,19 +321,6 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.3);
 }
 
-.carousel-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-}
-
-.add-btn {
-  @apply rounded-full flex items-center justify-center transition-transform duration-200 shadow-lg;
-}
-
-.add-btn:hover {
-  transform: scale(1.1);
-}
-
 .dot {
   @apply w-3 h-3 rounded-full transition-all duration-200;
   background: rgba(255, 255, 255, 0.4);
@@ -299,13 +333,5 @@ onUnmounted(() => {
 .dot.active {
   @apply transform scale-125;
   background: white;
-}
-
-/* Text clamp utility */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 </style>

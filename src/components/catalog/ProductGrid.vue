@@ -11,8 +11,18 @@
       
       <!-- Show actual carousels when loaded -->
       <template v-else>
-        <NovedadesCarousel @open-cart="openAddToCartModal" />
-        <OfertasCarousel @open-cart="openAddToCartModal" />
+        <div class="mb-6">
+          <NovedadesCarousel 
+            @open-cart="openAddToCartModal" 
+            :modal-open="showAddToCartModal"
+          />
+        </div>
+        <div>
+          <OfertasCarousel 
+            @open-cart="openAddToCartModal" 
+            :modal-open="showAddToCartModal"
+          />
+        </div>
       </template>
     </div>
 

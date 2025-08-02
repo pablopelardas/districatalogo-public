@@ -109,37 +109,42 @@ const handleSearch = async () => {
 
 const handleSearchWithScroll = async () => {
   await catalogStore.setSearch(searchQuery.value)
-  // Scroll to products after search is complete
+  // Only scroll if user is at the top of the page (above products)
   requestAnimationFrame(() => {
     const toolbarElement = document.querySelector('.products-toolbar')
     if (toolbarElement) {
-      const yOffset = -100; // Account for fixed header and better positioning
-      const y = toolbarElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      const toolbarTop = toolbarElement.getBoundingClientRect().top
       
-      // Custom easing function
-      const easeInOutCubic = (t: number): number => {
-        return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
-      };
-      
-      // Animate scroll with 300ms duration
-      const duration = 300;
-      const startY = window.pageYOffset;
-      const distance = y - startY;
-      const startTime = performance.now();
-      
-      const animateScroll = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = easeInOutCubic(progress);
+      // Only scroll if the products toolbar is below the viewport (user is scrolled up)
+      if (toolbarTop > window.innerHeight) {
+        const yOffset = -100; // Account for fixed header and better positioning
+        const y = toolbarElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
         
-        window.scrollTo(0, startY + distance * easedProgress);
+        // Custom easing function
+        const easeInOutCubic = (t: number): number => {
+          return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+        };
         
-        if (progress < 1) {
-          requestAnimationFrame(animateScroll);
-        }
-      };
-      
-      requestAnimationFrame(animateScroll);
+        // Animate scroll with 300ms duration
+        const duration = 300;
+        const startY = window.pageYOffset;
+        const distance = y - startY;
+        const startTime = performance.now();
+        
+        const animateScroll = (currentTime: number) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeInOutCubic(progress);
+          
+          window.scrollTo(0, startY + distance * easedProgress);
+          
+          if (progress < 1) {
+            requestAnimationFrame(animateScroll);
+          }
+        };
+        
+        requestAnimationFrame(animateScroll);
+      }
     }
   })
 }

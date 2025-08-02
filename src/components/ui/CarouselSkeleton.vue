@@ -20,7 +20,7 @@
         >
           <div class="bg-white/90 rounded-xl shadow-lg p-4">
             <!-- Image skeleton -->
-            <div class="aspect-square bg-gray-200 rounded-lg mb-4 animate-pulse"></div>
+            <div class="bg-gray-200 rounded-lg mb-4 animate-pulse" style="height: 280px;"></div>
             
             <!-- Title skeleton -->
             <div class="space-y-2 mb-4">
@@ -38,11 +38,11 @@
       </div>
     </div>
     
-    <!-- Dots skeleton for mobile -->
-    <div v-if="isMobile" class="flex justify-center mt-4 gap-2">
-      <div class="w-3 h-3 bg-white/30 rounded-full animate-pulse"></div>
-      <div class="w-3 h-3 bg-white/30 rounded-full animate-pulse"></div>
-      <div class="w-3 h-3 bg-white/30 rounded-full animate-pulse"></div>
+    <!-- Mobile indicator skeleton -->
+    <div v-if="isMobile" class="flex justify-center items-center gap-3 mt-4">
+      <div class="w-10 h-10 bg-white/20 rounded-full animate-pulse"></div>
+      <div class="w-16 h-8 bg-white/20 rounded-full animate-pulse"></div>
+      <div class="w-10 h-10 bg-white/20 rounded-full animate-pulse"></div>
     </div>
   </div>
 </template>

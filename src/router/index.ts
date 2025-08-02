@@ -38,7 +38,12 @@ const router = createRouter({
       redirect: '/',
     },
   ],
-  scrollBehavior(_, __, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
+    // Don't scroll if only query params changed (like search)
+    if (to.path === from.path) {
+      return false
+    }
+    
     if (savedPosition) {
       return savedPosition
     } else {

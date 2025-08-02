@@ -38,7 +38,15 @@ const updateURL = () => {
   const newQuery = JSON.stringify(query)
   
   if (currentQuery !== newQuery) {
-    router.replace({ query })
+    // Save current scroll position before updating URL
+    const scrollY = window.scrollY
+    
+    router.replace({ query }).then(() => {
+      // Restore scroll position after URL update
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY)
+      })
+    })
   }
 }
 

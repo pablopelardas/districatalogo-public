@@ -5,6 +5,7 @@
       :products="products"
       :icon="SparklesIcon"
       :autoplay-interval="5000"
+      :modal-open="props.modalOpen"
       @open-cart="$emit('openCart', $event)"
     />
   </div>
@@ -16,6 +17,14 @@ import { SparklesIcon } from '@heroicons/vue/24/outline'
 import ProductCarousel from './ProductCarousel.vue'
 import { useCatalogStore } from '@/stores/catalog'
 import type { Product } from '@/services/api'
+
+interface Props {
+  modalOpen?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modalOpen: false
+})
 
 defineEmits<{
   openCart: [product: Product]
