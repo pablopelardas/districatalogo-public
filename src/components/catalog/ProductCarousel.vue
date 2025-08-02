@@ -15,7 +15,7 @@
         <button
           @click="prevSlide"
           :disabled="currentIndex === 0"
-          class="control-btn w-12 h-12"
+          class="control-btn w-12 h-12 cursor-pointer"
           :class="{ 'opacity-50 cursor-not-allowed': currentIndex === 0 }"
           aria-label="Anterior"
         >
@@ -24,7 +24,7 @@
         <button
           @click="nextSlide"
           :disabled="currentIndex >= maxIndex"
-          class="control-btn w-12 h-12"
+          class="control-btn w-12 h-12 cursor-pointer"
           :class="{ 'opacity-50 cursor-not-allowed': currentIndex >= maxIndex }"
           aria-label="Siguiente"
         >
@@ -36,8 +36,8 @@
     <!-- Carousel -->
     <div 
       class="relative overflow-hidden rounded-xl"
-      @mouseenter="pauseAutoplay"
-      @mouseleave="resumeAutoplay"
+      @mouseenter="handleMouseEnter"
+      @mouseleave="handleMouseLeave"
     >
       <!-- Products Track -->
       <div 
@@ -108,7 +108,7 @@
         v-for="(_, index) in products"
         :key="index"
         @click="goToSlide(index)"
-        class="dot"
+        class="dot cursor-pointer"
         :class="{ 'active': index === currentIndex }"
         :aria-label="`Ir al producto ${index + 1}`"
       ></button>
@@ -120,7 +120,7 @@
         v-for="(_, index) in Array(Math.ceil(products.length / visibleProducts))"
         :key="index"
         @click="goToSlide(index * visibleProducts)"
-        class="dot"
+        class="dot cursor-pointer"
         :class="{ 'active': Math.floor(currentIndex / visibleProducts) === index }"
         :aria-label="`Ir a la página ${index + 1}`"
       ></button>
@@ -141,7 +141,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  autoplayInterval: 3000
+  autoplayInterval: 5000
 })
 
 const emit = defineEmits<{
@@ -207,6 +207,16 @@ const pauseAutoplay = () => {
 }
 
 const resumeAutoplay = () => {
+  isPaused.value = false
+}
+
+const handleMouseEnter = () => {
+  console.log('Mouse enter - pausing autoplay')
+  isPaused.value = true
+}
+
+const handleMouseLeave = () => {
+  console.log('Mouse leave - resuming autoplay')
   isPaused.value = false
 }
 

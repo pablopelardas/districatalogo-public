@@ -7,6 +7,8 @@ export const useCatalogStore = defineStore('catalog', () => {
   // State
   const products = ref<Product[]>([])
   const featuredProducts = ref<Product[]>([])
+  const novedades = ref<Product[]>([])
+  const ofertas = ref<Product[]>([])
   const categories = ref<Category[]>([])
   const filteredCategories = ref<Category[]>([])
   const currentProduct = ref<Product | null>(null)
@@ -30,6 +32,9 @@ export const useCatalogStore = defineStore('catalog', () => {
   const loadingCategories = ref(false)
   const loadingFeatured = ref(false)
   const loadingProduct = ref(false)
+  const loadingNovedades = ref(false)
+  const loadingOfertas = ref(false)
+  const initializing = ref(true) // Global initialization state
   
   // AbortController for cancelling requests
   let currentProductsController: AbortController | null = null
@@ -387,6 +392,62 @@ export const useCatalogStore = defineStore('catalog', () => {
   }
 
 
+  // Fetch novedades
+  const fetchNovedades = async (): Promise<void> => {
+    if (loadingNovedades.value) return
+    
+    loadingNovedades.value = true
+    
+    try {
+      const result = await apiService.getNovedades()
+      if (result.data) {
+        novedades.value = result.data
+      }
+    } catch (error) {
+      console.error('Error fetching novedades:', error)
+      novedades.value = []
+    } finally {
+      loadingNovedades.value = false
+    }
+  }
+
+  // Fetch ofertas
+  const fetchOfertas = async (): Promise<void> => {
+    if (loadingOfertas.value) return
+    
+    loadingOfertas.value = true
+    
+    try {
+      const result = await apiService.getOfertas()
+      if (result.data) {
+        ofertas.value = result.data
+      }
+    } catch (error) {
+      console.error('Error fetching ofertas:', error)
+      ofertas.value = []
+    } finally {
+      loadingOfertas.value = false
+    }
+  }
+
+  // Initialize all required data (except products which are fetched separately)
+  const initializeAll = async (): Promise<void> => {
+    initializing.value = true
+    
+    try {
+      // Fetch all initial data in parallel
+      await Promise.all([
+        fetchCategories(),
+        fetchNovedades(),
+        fetchOfertas()
+      ])
+    } catch (error) {
+      console.error('Error during initialization:', error)
+    } finally {
+      initializing.value = false
+    }
+  }
+
   // Initialize with company's default page size
   const initWithCompany = () => {
     const companyStore = useCompanyStore()
@@ -400,6 +461,8 @@ export const useCatalogStore = defineStore('catalog', () => {
     products,
     filteredProducts,
     featuredProducts,
+    novedades,
+    ofertas,
     categories,
     filteredCategories,
     displayCategories,
@@ -421,6 +484,9 @@ export const useCatalogStore = defineStore('catalog', () => {
     loadingCategories,
     loadingFeatured,
     loadingProduct,
+    loadingNovedades,
+    loadingOfertas,
+    initializing,
     
     // Errors
     productsError,
@@ -444,6 +510,9 @@ export const useCatalogStore = defineStore('catalog', () => {
     fetchFeaturedProducts,
     fetchProduct,
     fetchOriginalTotalCount,
+    fetchNovedades,
+    fetchOfertas,
+    initializeAll,
     setCategory,
     setSearch,
     setPriceList,

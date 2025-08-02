@@ -124,7 +124,11 @@ onMounted(async () => {
   // Add popstate listener for browser navigation
   window.addEventListener('popstate', handlePopState)
   
-  await companyStore.init()
+  // Initialize company and catalog data in parallel
+  await Promise.all([
+    companyStore.init(),
+    catalogStore.initializeAll() // This will fetch categories, novedades, and ofertas
+  ])
   
   // Handle price list from route parameter (without fetching)
   if (props.listId) {

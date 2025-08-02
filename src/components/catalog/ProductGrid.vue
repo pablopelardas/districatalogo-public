@@ -1,10 +1,19 @@
 <!-- ProductGrid.vue - Grid de productos con mejor spacing -->
 <template>
   <div class="py-6">
-    <!-- Carousels Section - Only show on initial page load (no filters/search) -->
-    <div v-if="shouldShowCarousels" class="mb-8">
-      <NovedadesCarousel @open-cart="openAddToCartModal" />
-      <OfertasCarousel @open-cart="openAddToCartModal" />
+    <!-- Carousels Section -->
+    <div class="mb-8">
+      <!-- Show skeleton while initially loading -->
+      <template v-if="isInitialLoading">
+        <CarouselSkeleton />
+        <CarouselSkeleton />
+      </template>
+      
+      <!-- Show actual carousels when loaded -->
+      <template v-else>
+        <NovedadesCarousel @open-cart="openAddToCartModal" />
+        <OfertasCarousel @open-cart="openAddToCartModal" />
+      </template>
     </div>
 
     <!-- Categories Section -->
@@ -223,7 +232,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
 import { 
   XMarkIcon,
@@ -239,6 +248,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import AddToCartModal from '@/components/cart/AddToCartModal.vue'
 import NovedadesCarousel from './NovedadesCarousel.vue'
 import OfertasCarousel from './OfertasCarousel.vue'
+import CarouselSkeleton from '@/components/ui/CarouselSkeleton.vue'
 
 // Stores
 const catalogStore = useCatalogStore()
@@ -258,7 +268,6 @@ const getStoredViewMode = (): 'grid' | 'list' => {
 }
 
 const viewMode = ref<'grid' | 'list'>(getStoredViewMode())
-const initialLoading = ref(true)
 const sortOrder = ref('nombre_asc')
 
 // Cart modal state
@@ -291,16 +300,14 @@ const hasActiveFilters = computed(() =>
 
 // Add a computed to track if we should show empty state
 const showEmptyState = computed(() => 
-  !loading.value && !error.value && !hasProducts.value && !initialLoading.value
+  !catalogStore.initializing && !loading.value && !error.value && !hasProducts.value
 )
 
-// Show carousels only on initial page load (no filters, search, or pagination)
-const shouldShowCarousels = computed(() => 
-  !hasActiveFilters.value && currentPage.value === 1 && !loading.value && !initialLoading.value
-)
+// Check if we're in initial loading state (show skeletons for everything)
+const isInitialLoading = computed(() => catalogStore.initializing)
 
 // Update loading to include initial loading
-const isLoading = computed(() => loading.value || initialLoading.value)
+const isLoading = computed(() => loading.value || catalogStore.initializing)
 
 // Methods
 const setViewMode = (mode: 'grid' | 'list') => {
@@ -460,7 +467,6 @@ const onProductAdded = (product: any, quantity: number) => {
 
 const fetchProducts = async () => {
   await catalogStore.fetchProducts()
-  initialLoading.value = false
 }
 
 const retry = () => {
@@ -493,12 +499,16 @@ watch([
 ], ([newSearch, newCategory, newFeatured, newSort], [oldSearch, oldCategory]) => {
   syncFiltersFromStore()
   
-  // Scroll to products when category changes (including "TODOS" which is null)
-  // but not when we're clearing filters (user is already viewing products)
-  // and not on initial mount unless there are active filters from URL
+  // Scroll behavior when category changes
   if (newCategory !== oldCategory && !isClearing.value && !isInitialMount.value) {
     requestAnimationFrame(() => {
-      scrollToProducts();
+      if (newCategory === null) {
+        // When going to "Todos", scroll to categories
+        scrollToCategories();
+      } else {
+        // When selecting a specific category, scroll to products
+        scrollToProducts();
+      }
     });
   } else if (isInitialMount.value && (newCategory !== null || newSearch || newFeatured)) {
     // Only scroll on initial mount if there are active filters from URL
@@ -513,12 +523,7 @@ watch([
   }
 }, { immediate: true })
 
-// Watch for products to be loaded and clear initial loading
-watch(() => catalogStore.products, (newProducts) => {
-  if (newProducts.length > 0 || (!catalogStore.loadingProducts && catalogStore.products.length === 0)) {
-    initialLoading.value = false
-  }
-}, { immediate: true })
+// Products loading is now handled by the global initializing state
 
 // Initialize
 onMounted(async () => {
