@@ -1,18 +1,20 @@
 <!-- AppHeader.vue - Header mejorado con mejor spacing -->
 <template>
   <header 
-    class="sticky top-0 z-50 transition-all duration-300" 
-    :class="{ 
-      'shadow-lg': isScrolled,
-      'header-scrolled': isScrolled 
-    }"
+    class="sticky top-0 z-50" 
+    :class="{ 'shadow-lg': isScrolled }"
   >
     <!-- Main Header -->
-    <div class="glass-header">
+    <div 
+      class="glass-header transition-all duration-500 ease-out"
+      :style="{
+        maxHeight: isScrolled ? '80px' : '1000px'
+      }"
+    >
       <div class="container">
         <div 
-          class="flex items-center justify-between transition-all duration-300"
-          :class="isScrolled ? 'py-2' : 'py-8 sm:py-4'"
+          class="flex items-center justify-between transition-all duration-500 ease-out"
+          :class="isScrolled ? 'py-3' : 'py-8 sm:py-4'"
         >
           <!-- Logo y nombre con mejor proporción -->
           <RouterLink to="/" class="group flex items-center gap-3">
@@ -78,8 +80,12 @@
 
         <!-- Search Bar con mejor padding - hidden when scrolled -->
         <div 
-          v-if="!isScrolled"
-          class="pb-10 sm:pb-6 transition-all duration-300"
+          class="transition-all duration-500 ease-out overflow-hidden"
+          :style="{
+            height: isScrolled ? '0px' : 'auto',
+            paddingBottom: isScrolled ? '0px' : '2.5rem',
+            opacity: isScrolled ? 0 : 1
+          }"
         >
           <div class="max-w-xl mx-auto">
             <SearchBar 
@@ -95,8 +101,14 @@
 
     <!-- Categories Section expandido - hidden when scrolled -->
     <div 
-      v-if="!isScrolled && (catalogStore.loadingCategories || (hasCategories && catalogStore.hasProducts))" 
-      class="py-4 bg-white/10 backdrop-blur-sm border-t border-white/10 transition-all duration-300"
+      v-if="catalogStore.loadingCategories || (hasCategories && catalogStore.hasProducts)"
+      class="bg-white/10 backdrop-blur-sm border-t border-white/10 transition-all duration-500 ease-out overflow-hidden"
+      :style="{
+        height: isScrolled ? '0px' : 'auto',
+        paddingTop: isScrolled ? '0px' : '1rem',
+        paddingBottom: isScrolled ? '0px' : '1rem',
+        opacity: isScrolled ? 0 : 1
+      }"
     >
       <div class="container py-6">
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
@@ -231,7 +243,7 @@ const setCategory = async (categoryId: number | null) => {
 
 
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 10
+  isScrolled.value = window.scrollY > 50
 }
 
 // Watch for store changes to sync UI with store state
