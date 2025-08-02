@@ -9,7 +9,10 @@
       v-model="localValue"
       type="text"
       :placeholder="placeholder"
-      class="w-full pl-11 pr-11 py-3 rounded-xl bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+      :class="[
+        'w-full pl-11 pr-11 rounded-xl bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all',
+        compact ? 'py-2 text-sm' : 'py-3'
+      ]"
       @keyup.enter="handleSearch"
       @input="handleInput"
     />
@@ -47,11 +50,13 @@ interface Props {
   modelValue: string
   placeholder?: string
   debounceMs?: number
+  compact?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Buscar productos...',
-  debounceMs: 500
+  debounceMs: 500,
+  compact: false
 })
 
 // Emits

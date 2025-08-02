@@ -1,16 +1,26 @@
 <!-- AppHeader.vue - Header mejorado con mejor spacing -->
 <template>
-  <header class="transition-all duration-300" :class="{ 'shadow-lg': isScrolled }">
+  <header 
+    class="sticky top-0 z-50 transition-all duration-300" 
+    :class="{ 
+      'shadow-lg': isScrolled,
+      'header-scrolled': isScrolled 
+    }"
+  >
     <!-- Main Header -->
     <div class="glass-header">
       <div class="container">
-        <div class="flex items-center justify-between py-8 sm:py-4">
+        <div 
+          class="flex items-center justify-between transition-all duration-300"
+          :class="isScrolled ? 'py-2' : 'py-8 sm:py-4'"
+        >
           <!-- Logo y nombre con mejor proporción -->
           <RouterLink to="/" class="group flex items-center gap-3">
             <div class="relative">
               <div 
                 v-if="companyLogo"
-                class="w-12 h-12 rounded-xl overflow-hidden border-2 border-white/20 shadow-md group-hover:shadow-lg transition-all"
+                class="rounded-xl overflow-hidden border-2 border-white/20 shadow-md group-hover:shadow-lg transition-all"
+                :class="isScrolled ? 'w-8 h-8' : 'w-12 h-12'"
               >
                 <img 
                   :src="companyLogo" 
@@ -20,24 +30,57 @@
               </div>
               <div 
                 v-else 
-                class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-md"
+                class="rounded-xl flex items-center justify-center text-white font-bold shadow-md transition-all"
+                :class="[
+                  isScrolled ? 'w-8 h-8 text-sm' : 'w-12 h-12 text-lg'
+                ]"
                 :style="{ background: 'var(--theme-accent)' }"
               >
                 {{ companyName.charAt(0) }}
               </div>
-              <!-- Status indicator -->
-              <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+              <!-- Status indicator - hidden when scrolled -->
+              <div 
+                v-if="!isScrolled"
+                class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white transition-opacity duration-300"
+              ></div>
             </div>
             
-            <div class="text-white">
-              <h1 class="text-lg font-semibold">{{ companyName }}</h1>
-              <p v-if="company?.razon_social" class="text-sm opacity-80">{{ company.razon_social }}</p>
+            <div class="text-white transition-all duration-300">
+              <h1 
+                class="font-semibold transition-all duration-300"
+                :class="isScrolled ? 'text-sm' : 'text-lg'"
+              >
+                {{ companyName }}
+              </h1>
+              <p 
+                v-if="company?.razon_social && !isScrolled" 
+                class="text-sm opacity-80 transition-opacity duration-300"
+              >
+                {{ company.razon_social }}
+              </p>
             </div>
           </RouterLink>
+          
+          <!-- Compact Search Bar for scrolled state -->
+          <div 
+            v-if="isScrolled"
+            class="flex-1 max-w-lg mx-4 transition-all duration-300"
+          >
+            <SearchBar 
+              v-model="searchQuery"
+              @search="handleSearch"
+              @searchWithScroll="handleSearchWithScroll"
+              placeholder="Buscar productos..."
+              compact
+            />
+          </div>
         </div>
 
-        <!-- Search Bar con mejor padding -->
-        <div class="pb-10 sm:pb-6">
+        <!-- Search Bar con mejor padding - hidden when scrolled -->
+        <div 
+          v-if="!isScrolled"
+          class="pb-10 sm:pb-6 transition-all duration-300"
+        >
           <div class="max-w-xl mx-auto">
             <SearchBar 
               v-model="searchQuery"
@@ -50,8 +93,11 @@
       </div>
     </div>
 
-    <!-- Categories Section expandido -->
-    <div v-if="catalogStore.loadingCategories || (hasCategories && catalogStore.hasProducts)" class="py-4 bg-white/10 backdrop-blur-sm border-t border-white/10">
+    <!-- Categories Section expandido - hidden when scrolled -->
+    <div 
+      v-if="!isScrolled && (catalogStore.loadingCategories || (hasCategories && catalogStore.hasProducts))" 
+      class="py-4 bg-white/10 backdrop-blur-sm border-t border-white/10 transition-all duration-300"
+    >
       <div class="container py-6">
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
           <!-- Show skeleton only when loading categories OR when searching (loadingProducts + searchQuery) -->

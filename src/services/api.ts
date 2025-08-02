@@ -78,9 +78,25 @@ interface CatalogFilters {
   ordenarPor?: 'precio_asc' | 'precio_desc' | 'nombre_asc' | 'nombre_desc'
 }
 
+interface SpecialProductsResponse {
+  success: boolean
+  message: string | null
+  productos: Product[]
+  total_productos: number
+  empresa_nombre: string
+  fecha_consulta: string
+}
+
+interface CacheEntry {
+  data: Product[]
+  timestamp: number
+}
+
 class ApiService {
   private baseUrl: string
   private empresaId: number | null = null
+  private cache: Map<string, CacheEntry> = new Map()
+  private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
   constructor() {
     // Detect if we're in development or production
@@ -178,6 +194,82 @@ class ApiService {
       limit
     }
     return this.fetch<{ productos: Product[] }>('/api/catalog/destacados', params)
+  }
+
+  // Cache management methods
+  private getCachedData(key: string): Product[] | null {
+    const cached = this.cache.get(key)
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      return cached.data
+    }
+    this.cache.delete(key)
+    return null
+  }
+
+  private setCachedData(key: string, data: Product[]): void {
+    this.cache.set(key, { data, timestamp: Date.now() })
+  }
+
+  // Get novedades (products marked as new)
+  async getNovedades(): Promise<{ data: Product[], error?: string }> {
+    const cacheKey = 'novedades'
+    
+    // Check cache first
+    const cachedData = this.getCachedData(cacheKey)
+    if (cachedData) {
+      return { data: cachedData }
+    }
+
+    try {
+      const response = await this.fetch<SpecialProductsResponse>('/api/catalog/novedades')
+      
+      if (response.error) {
+        console.error('Error fetching novedades:', response.error)
+        return { data: [] }
+      }
+
+      const productos = response.data?.productos || []
+      
+      // Cache the result
+      this.setCachedData(cacheKey, productos)
+      
+      return { data: productos }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('Error fetching novedades:', errorMessage)
+      return { data: [] }
+    }
+  }
+
+  // Get ofertas (products marked as offers)
+  async getOfertas(): Promise<{ data: Product[], error?: string }> {
+    const cacheKey = 'ofertas'
+    
+    // Check cache first
+    const cachedData = this.getCachedData(cacheKey)
+    if (cachedData) {
+      return { data: cachedData }
+    }
+
+    try {
+      const response = await this.fetch<SpecialProductsResponse>('/api/catalog/ofertas')
+      
+      if (response.error) {
+        console.error('Error fetching ofertas:', response.error)
+        return { data: [] }
+      }
+
+      const productos = response.data?.productos || []
+      
+      // Cache the result
+      this.setCachedData(cacheKey, productos)
+      
+      return { data: productos }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('Error fetching ofertas:', errorMessage)
+      return { data: [] }
+    }
   }
 }
 

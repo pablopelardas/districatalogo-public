@@ -1,6 +1,12 @@
 <!-- ProductGrid.vue - Grid de productos con mejor spacing -->
 <template>
   <div class="py-6">
+    <!-- Carousels Section - Only show on initial page load (no filters/search) -->
+    <div v-if="shouldShowCarousels" class="mb-8">
+      <NovedadesCarousel @open-cart="openAddToCartModal" />
+      <OfertasCarousel @open-cart="openAddToCartModal" />
+    </div>
+    
     <!-- Toolbar simplificado -->
     <div class="mb-6 pt-6 products-toolbar">
       <!-- Primera fila: Contador con página y controles -->
@@ -185,6 +191,8 @@ import ProductCard from './ProductCard.vue'
 import ProductSkeleton from '@/components/ui/ProductSkeleton.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import AddToCartModal from '@/components/cart/AddToCartModal.vue'
+import NovedadesCarousel from './NovedadesCarousel.vue'
+import OfertasCarousel from './OfertasCarousel.vue'
 
 // Stores
 const catalogStore = useCatalogStore()
@@ -240,6 +248,11 @@ const showEmptyState = computed(() =>
   !loading.value && !error.value && !hasProducts.value && !initialLoading.value
 )
 
+// Show carousels only on initial page load (no filters, search, or pagination)
+const shouldShowCarousels = computed(() => 
+  !hasActiveFilters.value && currentPage.value === 1 && !loading.value && !initialLoading.value
+)
+
 // Update loading to include initial loading
 const isLoading = computed(() => loading.value || initialLoading.value)
 
@@ -263,6 +276,8 @@ const clearCategory = () => {
   selectedCategory.value = null
   catalogStore.setCategory(null, false) // Don't reset page when clearing
   fetchProducts()
+  // Scroll to categories when clearing category filter
+  requestAnimationFrame(scrollToCategories)
   // Reset flag after a short delay to allow for state changes
   setTimeout(() => {
     isClearing.value = false
@@ -274,6 +289,8 @@ const clearSearch = () => {
   searchQuery.value = ''
   catalogStore.setSearch('', false) // Don't reset page when clearing
   fetchProducts()
+  // Scroll to categories when clearing search
+  requestAnimationFrame(scrollToCategories)
   // Reset flag after a short delay to allow for state changes
   setTimeout(() => {
     isClearing.value = false
@@ -287,6 +304,8 @@ const clearAllFilters = () => {
   showFeaturedOnly.value = false
   catalogStore.clearFilters()
   fetchProducts()
+  // Scroll to categories when clearing all filters
+  requestAnimationFrame(scrollToCategories)
   // Reset flag after a short delay to allow for state changes
   setTimeout(() => {
     isClearing.value = false
@@ -311,6 +330,45 @@ const scrollToProducts = () => {
       const progress = Math.min((timestamp - start) / duration, 1);
       
       // Same easing function for consistency
+      const easeInOutCubic = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      
+      window.scrollTo(0, startY + distance * easeInOutCubic);
+      
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+    
+    requestAnimationFrame(step);
+  }
+}
+
+const scrollToCategories = () => {
+  // Look for categories section in the header first, or fallback to products if categories not visible
+  const categoriesElement = document.querySelector('header .grid') // Categories grid in header
+  let targetElement = categoriesElement
+  
+  // If categories not visible (because header is compact), scroll to top of products toolbar
+  if (!categoriesElement) {
+    targetElement = document.querySelector('.products-toolbar')
+  }
+  
+  if (targetElement) {
+    const yOffset = -20; // Small offset above categories for better visibility
+    const y = targetElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    
+    // Use the same animation as scrollToProducts for consistency
+    const startY = window.pageYOffset;
+    const distance = y - startY;
+    const duration = 300;
+    let start: number | null = null;
+    
+    const step = (timestamp: number) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      
       const easeInOutCubic = progress < 0.5
         ? 4 * progress * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 3) / 2;
