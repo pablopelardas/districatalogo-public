@@ -8,7 +8,7 @@
     </div>
 
     <!-- Categories Section -->
-    <div class="mb-8 py-4 bg-white/10 backdrop-blur-sm rounded-xl">
+    <div class="categories-section mb-8 py-4 bg-white/10 backdrop-blur-sm rounded-xl">
       <div class="container py-6">
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
           <!-- Show skeleton when loading categories -->
@@ -362,7 +362,7 @@ const scrollToProducts = () => {
   // Find the products toolbar (contains count and sorting)
   const toolbarElement = document.querySelector('.products-toolbar')
   if (toolbarElement) {
-    const yOffset = 10; // Offset to hide categories but show toolbar with breathing room
+    const yOffset = -100; // Scroll a bit higher to account for fixed header and better visibility
     const y = toolbarElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
     
     // Use the same fast custom scroll animation
@@ -392,18 +392,11 @@ const scrollToProducts = () => {
 }
 
 const scrollToCategories = () => {
-  // Look for categories section in the header first, or fallback to products if categories not visible
-  const categoriesElement = document.querySelector('header .grid') // Categories grid in header
-  let targetElement = categoriesElement
-  
-  // If categories not visible (because header is compact), scroll to top of products toolbar
-  if (!categoriesElement) {
-    targetElement = document.querySelector('.products-toolbar')
-  }
-  
-  if (targetElement) {
-    const yOffset = -20; // Small offset above categories for better visibility
-    const y = targetElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+  // Find the categories section in the ProductGrid
+  const categoriesSection = document.querySelector('.categories-section')
+  if (categoriesSection) {
+    const yOffset = -120; // Account for fixed header (80px) + extra breathing room
+    const y = categoriesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
     
     // Use the same animation as scrollToProducts for consistency
     const startY = window.pageYOffset;

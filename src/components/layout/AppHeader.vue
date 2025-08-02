@@ -113,7 +113,7 @@ const handleSearchWithScroll = async () => {
   requestAnimationFrame(() => {
     const toolbarElement = document.querySelector('.products-toolbar')
     if (toolbarElement) {
-      const yOffset = 10;
+      const yOffset = -100; // Account for fixed header and better positioning
       const y = toolbarElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
       // Custom easing function
