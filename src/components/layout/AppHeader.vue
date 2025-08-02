@@ -1,16 +1,11 @@
 <!-- AppHeader.vue - Header mejorado con mejor spacing -->
 <template>
   <header 
-    class="sticky top-0 z-50" 
+    class="sticky top-0 z-50 transition-all duration-500 ease-out" 
     :class="{ 'shadow-lg': isScrolled }"
   >
     <!-- Main Header -->
-    <div 
-      class="glass-header transition-all duration-500 ease-out"
-      :style="{
-        maxHeight: isScrolled ? '80px' : '1000px'
-      }"
-    >
+    <div class="glass-header h-full overflow-hidden">
       <div class="container">
         <div 
           class="flex items-center justify-between transition-all duration-500 ease-out"
@@ -80,12 +75,8 @@
 
         <!-- Search Bar con mejor padding - hidden when scrolled -->
         <div 
-          class="transition-all duration-500 ease-out overflow-hidden"
-          :style="{
-            height: isScrolled ? '0px' : 'auto',
-            paddingBottom: isScrolled ? '0px' : '2.5rem',
-            opacity: isScrolled ? 0 : 1
-          }"
+          v-show="!isScrolled"
+          class="pb-10 sm:pb-6 transition-all duration-500 ease-out"
         >
           <div class="max-w-xl mx-auto">
             <SearchBar 
@@ -101,14 +92,8 @@
 
     <!-- Categories Section expandido - hidden when scrolled -->
     <div 
-      v-if="catalogStore.loadingCategories || (hasCategories && catalogStore.hasProducts)"
-      class="bg-white/10 backdrop-blur-sm border-t border-white/10 transition-all duration-500 ease-out overflow-hidden"
-      :style="{
-        height: isScrolled ? '0px' : 'auto',
-        paddingTop: isScrolled ? '0px' : '1rem',
-        paddingBottom: isScrolled ? '0px' : '1rem',
-        opacity: isScrolled ? 0 : 1
-      }"
+      v-if="!isScrolled && (catalogStore.loadingCategories || (hasCategories && catalogStore.hasProducts))"
+      class="py-4 bg-white/10 backdrop-blur-sm border-t border-white/10 transition-all duration-500 ease-out"
     >
       <div class="container py-6">
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
@@ -242,8 +227,17 @@ const setCategory = async (categoryId: number | null) => {
 }
 
 
+// Prevent scroll oscillation with hysteresis
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 50
+  const currentScroll = window.scrollY
+  
+  if (!isScrolled.value && currentScroll > 100) {
+    // Going from expanded to collapsed - scroll down threshold
+    isScrolled.value = true
+  } else if (isScrolled.value && currentScroll < 50) {
+    // Going from collapsed to expanded - scroll up threshold (much lower)
+    isScrolled.value = false
+  }
 }
 
 // Watch for store changes to sync UI with store state
