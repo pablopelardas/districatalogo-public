@@ -6,6 +6,51 @@
       <NovedadesCarousel @open-cart="openAddToCartModal" />
       <OfertasCarousel @open-cart="openAddToCartModal" />
     </div>
+
+    <!-- Categories Section -->
+    <div class="mb-8 py-4 bg-white/10 backdrop-blur-sm rounded-xl">
+      <div class="container py-6">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <!-- Show skeleton when loading categories -->
+          <template v-if="catalogStore.loadingCategories">
+            <CategoryChipSkeleton v-for="i in 12" :key="`chip-skeleton-${i}`" />
+          </template>
+          
+          <!-- Show actual categories -->
+          <template v-else>
+            <button
+              class="category-pill"
+              :class="{ active: selectedCategory === null }"
+              @click="setCategory(null)"
+            >
+              <ViewGridIcon class="h-4 w-4" />
+              <span>Todos</span>
+              <span class="count">({{ catalogStore.totalCount }})</span>
+            </button>
+            
+            <button
+              v-for="category in catalogStore.displayCategories"
+              :key="category.id"
+              class="category-pill"
+              :class="{ active: selectedCategory === category.codigo_rubro }"
+              @click="setCategory(category.codigo_rubro)"
+            >
+              <!-- Category Icon -->
+              <span 
+                v-if="category.icono" 
+                class="category-icon-text"
+                :style="{ color: category.color || 'var(--theme-accent)' }"
+              >
+                {{ category.icono }}
+              </span>
+              
+              <span>{{ category.nombre }}</span>
+              <span class="count">({{ category.product_count || 0 }})</span>
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
     
     <!-- Toolbar simplificado -->
     <div class="mb-6 pt-6 products-toolbar">
@@ -189,6 +234,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import ProductCard from './ProductCard.vue'
 import ProductSkeleton from '@/components/ui/ProductSkeleton.vue'
+import CategoryChipSkeleton from '@/components/ui/CategoryChipSkeleton.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import AddToCartModal from '@/components/cart/AddToCartModal.vue'
 import NovedadesCarousel from './NovedadesCarousel.vue'
@@ -433,6 +479,11 @@ const handleSortChange = async () => {
   await catalogStore.setSortBy(sortValue as any)
 }
 
+const setCategory = async (categoryId: number | null) => {
+  selectedCategory.value = categoryId
+  await catalogStore.setCategory(categoryId)
+}
+
 const syncFiltersFromStore = () => {
   searchQuery.value = catalogStore.searchQuery
   selectedCategory.value = catalogStore.selectedCategory
@@ -484,3 +535,30 @@ onMounted(async () => {
   // Don't fetch products here - let Catalog.vue handle it
 })
 </script>
+
+<style scoped>
+@reference "tailwindcss";
+
+.category-pill {
+  @apply flex items-center gap-2 px-3 py-2 rounded-full text-white text-sm font-medium transition-all justify-center min-h-[2.5rem] cursor-pointer;
+  background: var(--theme-secondary);
+}
+
+.category-pill:hover {
+  filter: brightness(1.1);
+}
+
+.category-pill.active {
+  filter: brightness(1.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.category-pill .count {
+  @apply text-xs opacity-70;
+}
+
+.category-icon-text {
+  @apply text-lg font-bold flex-shrink-0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+</style>

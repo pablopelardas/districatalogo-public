@@ -2,7 +2,13 @@
 <template>
   <div class="min-h-screen flex flex-col" :style="{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-primary-dark))` }">
     <!-- Header -->
-    <AppHeader />
+    <AppHeader 
+      @open-cart-summary="showCartSummary = true"
+      @open-export-options="showExportOptions = true"
+    />
+    
+    <!-- Header Spacer -->
+    <div style="height: 80px;"></div>
     
     <!-- Main Content con container apropiado -->
     <main class="flex-1">
@@ -13,13 +19,6 @@
     
     <!-- Footer -->
     <AppFooter />
-    
-    <!-- Floating Cart Button -->
-    <FloatingCart 
-      :always-show="true" 
-      @open-summary="showCartSummary = true"
-      @open-export="showExportOptions = true"
-    />
     
     <!-- Cart Summary Modal -->
     <CartSummary 
@@ -57,7 +56,6 @@ import { useCartStore } from '@/stores/cart'
 import { useWelcomeBack } from '@/composables/useWelcomeBack'
 import AppHeader from './AppHeader.vue'
 import AppFooter from './AppFooter.vue'
-import FloatingCart from '@/components/cart/FloatingCart.vue'
 import CartSummary from '@/components/cart/CartSummary.vue'
 import ExportOptions from '@/components/cart/ExportOptions.vue'
 import WelcomeBackModal from '@/components/ui/WelcomeBackModal.vue'

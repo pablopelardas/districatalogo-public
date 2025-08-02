@@ -5,16 +5,23 @@
       <button 
         v-if="cartStore.itemCount > 0 || alwaysShow"
         @click="toggleCart"
-        class="fixed top-6 right-6 z-40 group cursor-pointer"
-        :class="{ 'animate-bounce': justAdded }"
+        class="group cursor-pointer"
+        :class="[
+          compact ? 'relative' : 'fixed top-6 right-6 z-40',
+          { 'animate-bounce': justAdded && !compact }
+        ]"
       >
         <!-- Button -->
         <div class="relative">
           <div 
-            class="flex items-center justify-center w-14 h-14 rounded-full shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-300"
+            class="flex items-center justify-center rounded-full shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-300"
+            :class="compact ? 'w-10 h-10' : 'w-14 h-14'"
             :style="{ background: 'var(--theme-accent)' }"
           >
-            <ClipboardDocumentListIcon class="w-7 h-7 text-white" />
+            <ClipboardDocumentListIcon 
+              class="text-white"
+              :class="compact ? 'w-5 h-5' : 'w-7 h-7'"
+            />
           </div>
           
           <!-- Item Count Badge -->
@@ -27,8 +34,9 @@
             </div>
           </Transition>
           
-          <!-- Pulse animation -->
+          <!-- Pulse animation (only when not compact) -->
           <div 
+            v-if="!compact"
             class="absolute inset-0 rounded-full animate-ping opacity-30" 
             :style="{ background: 'var(--theme-accent)' }"
           ></div>
@@ -48,7 +56,8 @@
     <Transition name="dropdown-slide">
       <div 
         v-if="showDropdown"
-        class="fixed top-20 right-6 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-[9999]"
+        class="w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-[9999]"
+        :class="compact ? 'absolute top-full right-0 mt-2' : 'fixed top-20 right-6'"
         @click.stop
       >
         <!-- Header -->
@@ -179,10 +188,12 @@ import {
 
 interface Props {
   alwaysShow?: boolean
+  compact?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
-  alwaysShow: false
+const props = withDefaults(defineProps<Props>(), {
+  alwaysShow: false,
+  compact: false
 })
 
 const emit = defineEmits<{

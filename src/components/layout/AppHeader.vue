@@ -1,23 +1,21 @@
 <!-- AppHeader.vue - Header mejorado con mejor spacing -->
 <template>
-  <header 
-    class="sticky top-0 z-50 transition-all duration-500 ease-out" 
-    :class="{ 'shadow-lg': isScrolled }"
-  >
+  <div>
     <!-- Main Header -->
-    <div class="glass-header h-full overflow-hidden">
-      <div class="container">
+    <header 
+      class="fixed top-0 left-0 right-0 z-50 shadow-lg glass-header"
+      style="height: 80px;"
+    >
+      <div class="container h-full">
         <div 
-          class="flex items-center justify-between transition-all duration-500 ease-out"
-          :class="isScrolled ? 'py-3' : 'py-8 sm:py-4'"
+          class="flex items-center justify-between h-full py-3"
         >
           <!-- Logo y nombre con mejor proporción -->
           <RouterLink to="/" class="group flex items-center gap-3">
             <div class="relative">
               <div 
                 v-if="companyLogo"
-                class="rounded-xl overflow-hidden border-2 border-white/20 shadow-md group-hover:shadow-lg transition-all"
-                :class="isScrolled ? 'w-8 h-8' : 'w-12 h-12'"
+                class="w-10 h-10 rounded-xl overflow-hidden border-2 border-white/20 shadow-md group-hover:shadow-lg transition-all"
               >
                 <img 
                   :src="companyLogo" 
@@ -27,42 +25,22 @@
               </div>
               <div 
                 v-else 
-                class="rounded-xl flex items-center justify-center text-white font-bold shadow-md transition-all"
-                :class="[
-                  isScrolled ? 'w-8 h-8 text-sm' : 'w-12 h-12 text-lg'
-                ]"
+                class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md"
                 :style="{ background: 'var(--theme-accent)' }"
               >
                 {{ companyName.charAt(0) }}
               </div>
-              <!-- Status indicator - hidden when scrolled -->
-              <div 
-                v-if="!isScrolled"
-                class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white transition-opacity duration-300"
-              ></div>
             </div>
             
-            <div class="text-white transition-all duration-300">
-              <h1 
-                class="font-semibold transition-all duration-300"
-                :class="isScrolled ? 'text-sm' : 'text-lg'"
-              >
+            <div class="text-white hidden sm:block">
+              <h1 class="font-semibold text-base">
                 {{ companyName }}
               </h1>
-              <p 
-                v-if="company?.razon_social && !isScrolled" 
-                class="text-sm opacity-80 transition-opacity duration-300"
-              >
-                {{ company.razon_social }}
-              </p>
             </div>
           </RouterLink>
           
-          <!-- Compact Search Bar for scrolled state -->
-          <div 
-            v-if="isScrolled"
-            class="flex-1 max-w-lg mx-4 transition-all duration-300"
-          >
+          <!-- Search Bar -->
+          <div class="flex-1 max-w-lg mx-4">
             <SearchBar 
               v-model="searchQuery"
               @search="handleSearch"
@@ -71,88 +49,35 @@
               compact
             />
           </div>
-        </div>
-
-        <!-- Search Bar con mejor padding - hidden when scrolled -->
-        <div 
-          v-show="!isScrolled"
-          class="pb-10 sm:pb-6 transition-all duration-500 ease-out"
-        >
-          <div class="max-w-xl mx-auto">
-            <SearchBar 
-              v-model="searchQuery"
-              @search="handleSearch"
-              @searchWithScroll="handleSearchWithScroll"
-              placeholder="¿Qué estás buscando hoy?"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Categories Section expandido - hidden when scrolled -->
-    <div 
-      v-if="!isScrolled && (catalogStore.loadingCategories || (hasCategories && catalogStore.hasProducts))"
-      class="py-4 bg-white/10 backdrop-blur-sm border-t border-white/10 transition-all duration-500 ease-out"
-    >
-      <div class="container py-6">
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-          <!-- Show skeleton only when loading categories OR when searching (loadingProducts + searchQuery) -->
-          <template v-if="catalogStore.loadingCategories || (catalogStore.loadingProducts && catalogStore.searchQuery)">
-            <CategoryChipSkeleton v-for="i in 12" :key="`chip-skeleton-${i}`" />
-          </template>
           
-          <!-- Show actual categories when not loading -->
-          <template v-else>
-            <button
-              class="category-pill"
-              :class="{ active: selectedCategory === null }"
-              @click="setCategory(null)"
-            >
-              <ViewGridIcon class="h-4 w-4" />
-              <span>Todos</span>
-              <span class="count">({{ totalProducts }})</span>
-            </button>
-            
-            <button
-              v-for="category in categories"
-              :key="category.id"
-              class="category-pill"
-              :class="{ active: selectedCategory === category.codigo_rubro }"
-              @click="setCategory(category.codigo_rubro)"
-            >
-              <!-- Category Icon -->
-              <span 
-                v-if="category.icono" 
-                class="category-icon-text"
-                :style="{ color: category.color || 'var(--theme-accent)' }"
-              >
-                {{ category.icono }}
-              </span>
-              
-              <span>{{ category.nombre }}</span>
-              <span class="count">({{ category.product_count || 0 }})</span>
-            </button>
-          </template>
+          <!-- Cart Button -->
+          <FloatingCart 
+            :always-show="true" 
+            :compact="true"
+            @open-summary="$emit('openCartSummary')"
+            @open-export="$emit('openExportOptions')"
+          />
         </div>
       </div>
-    </div>
-  </header>
+    </header>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { useCatalogStore } from '@/stores/catalog'
 import SearchBar from '@/components/catalog/SearchBar.vue'
 import CategoryChipSkeleton from '@/components/ui/CategoryChipSkeleton.vue'
-import { 
-  HeartIcon, 
-  ShoppingCartIcon, 
-  SparklesIcon, 
-  Squares2X2Icon as ViewGridIcon
-} from '@heroicons/vue/24/outline'
+import FloatingCart from '@/components/cart/FloatingCart.vue'
+import { Squares2X2Icon as ViewGridIcon } from '@heroicons/vue/24/outline'
+
+// Emits
+const emit = defineEmits<{
+  openCartSummary: []
+  openExportOptions: []
+}>()
 
 // Stores
 const companyStore = useCompanyStore()
@@ -161,8 +86,6 @@ const catalogStore = useCatalogStore()
 // State
 const searchQuery = ref('')
 const selectedCategory = ref<number | null>(null)
-const isScrolled = ref(false)
-const cartCount = ref(3) // Ejemplo
 
 // Computed
 const company = computed(() => companyStore.company)
@@ -227,18 +150,6 @@ const setCategory = async (categoryId: number | null) => {
 }
 
 
-// Prevent scroll oscillation with hysteresis
-const handleScroll = () => {
-  const currentScroll = window.scrollY
-  
-  if (!isScrolled.value && currentScroll > 100) {
-    // Going from expanded to collapsed - scroll down threshold
-    isScrolled.value = true
-  } else if (isScrolled.value && currentScroll < 50) {
-    // Going from collapsed to expanded - scroll up threshold (much lower)
-    isScrolled.value = false
-  }
-}
 
 // Watch for store changes to sync UI with store state
 watch(() => catalogStore.selectedCategory, (newCategory) => {
@@ -253,12 +164,6 @@ onMounted(() => {
   // Sync initial state from store
   selectedCategory.value = catalogStore.selectedCategory
   searchQuery.value = catalogStore.searchQuery
-  
-  window.addEventListener('scroll', handleScroll)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
