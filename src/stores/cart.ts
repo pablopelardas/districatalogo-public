@@ -196,6 +196,31 @@ export const useCartStore = defineStore('cart', () => {
     return encodeURIComponent(body)
   }
   
+  const exportForWhatsAppPedido = (companyName: string) => {
+    if (isEmpty.value) return ''
+    
+    let message = `🛒 *PEDIDO - ${companyName}*\n\n`
+    message += `Hola! Me gustaría hacer el siguiente pedido:\n\n`
+    
+    items.value.forEach((item, index) => {
+      const total = item.precio * item.cantidad
+      message += `*${index + 1}. ${item.nombre}*\n`
+      message += `   📦 Código: ${item.codigo}\n`
+      message += `   🔢 Cantidad: ${item.cantidad}\n`
+      message += `   💰 Precio: $${item.precio.toFixed(2)} c/u\n`
+      message += `   💵 Subtotal: $${total.toFixed(2)}\n\n`
+    })
+    
+    message += `━━━━━━━━━━━━━━━━━━━━\n`
+    message += `📊 *RESUMEN DEL PEDIDO*\n`
+    message += `🛍️ Total productos: ${totalItems.value}\n`
+    message += `💸 *TOTAL GENERAL: $${totalAmount.value.toFixed(2)}*\n\n`
+    message += `¿Podrían confirmarme disponibilidad y precio final?\n\n`
+    message += `_Nota: Este pedido está basado en los precios del catálogo web y está sujeto a confirmación._`
+    
+    return encodeURIComponent(message)
+  }
+  
   // Initialize from storage
   loadFromStorage()
   
@@ -221,6 +246,7 @@ export const useCartStore = defineStore('cart', () => {
     // Export functions
     exportToText,
     exportForWhatsApp,
+    exportForWhatsAppPedido,
     exportForEmail,
     
     // Utility

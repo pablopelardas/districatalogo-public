@@ -57,6 +57,7 @@ import { useRoute } from 'vue-router'
 import { RouterLink } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { useCatalogStore } from '@/stores/catalog'
+import { useSeo } from '@/composables/useSeo'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProductDetail from '@/components/catalog/ProductDetail.vue'
@@ -66,6 +67,7 @@ import ProductCard from '@/components/catalog/ProductCard.vue'
 const route = useRoute()
 const companyStore = useCompanyStore()
 const catalogStore = useCatalogStore()
+const { setProductSeo } = useSeo()
 
 // Computed
 const product = computed(() => catalogStore.currentProduct)
@@ -104,10 +106,12 @@ const loadRelatedProducts = async () => {
   }
 }
 
-// Watch for product changes to load related products
+// Watch for product changes to load related products and update SEO
 watch(product, async (newProduct) => {
-  if (newProduct) {
+  if (newProduct && companyStore.company) {
     await loadRelatedProducts()
+    // Update SEO for product
+    setProductSeo(newProduct.nombre, companyStore.company, newProduct.imagen_urls[0])
   }
 }, { immediate: true })
 

@@ -94,8 +94,9 @@ const handleInput = () => {
   emit('update:modelValue', localValue.value)
   
   debounceTimer = setTimeout(() => {
-    // Solo emit search sin scroll para mantener la posición actual
+    // Emit both search and scroll after debounce
     emit('search')
+    emit('searchWithScroll')
   }, props.debounceMs)
 }
 

@@ -52,6 +52,7 @@ interface Company {
   telefono: string
   email: string
   direccion: string
+  descripcion?: string
   logo_url: string
   colores_tema: string
   favicon_url: string

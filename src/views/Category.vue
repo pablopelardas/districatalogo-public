@@ -63,6 +63,7 @@ import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { useCatalogStore } from '@/stores/catalog'
+import { useSeo } from '@/composables/useSeo'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { RouterLink } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -72,6 +73,7 @@ import ProductGrid from '@/components/catalog/ProductGrid.vue'
 const route = useRoute()
 const companyStore = useCompanyStore()
 const catalogStore = useCatalogStore()
+const { setCategorySeo } = useSeo()
 
 // Computed
 const categoryCode = computed(() => {
@@ -100,9 +102,14 @@ const loadCategory = async () => {
     await catalogStore.fetchCategories()
   }
   
-  // Update page title
+  // Update page title and SEO
   const categoryName = category.value?.nombre || 'Categoría'
   companyStore.updateTitle(categoryName)
+  
+  // Update SEO for category
+  if (category.value && companyStore.company) {
+    setCategorySeo(category.value.nombre, companyStore.company)
+  }
 }
 
 // Watch for route changes

@@ -132,11 +132,22 @@ export function useTheme() {
   const setFavicon = (faviconUrl: string) => {
     if (!faviconUrl) return
     
-    const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement) || document.createElement('link')
-    link.type = 'image/x-icon'
-    link.rel = 'shortcut icon'
-    link.href = faviconUrl
-    document.getElementsByTagName('head')[0].appendChild(link)
+    const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement
+    
+    // Only update if it's different from current favicon
+    if (link && link.href === faviconUrl) {
+      return
+    }
+    
+    // Create or update favicon link
+    const newLink = link || document.createElement('link')
+    newLink.type = 'image/x-icon'
+    newLink.rel = 'shortcut icon'
+    newLink.href = faviconUrl
+    
+    if (!link) {
+      document.getElementsByTagName('head')[0].appendChild(newLink)
+    }
   }
   
   // Computed properties for current theme

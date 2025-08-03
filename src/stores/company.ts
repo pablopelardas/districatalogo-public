@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiService, type Company } from '@/services/api'
 import { useTheme } from '@/composables/useTheme'
+import { useSeo } from '@/composables/useSeo'
 
 export const useCompanyStore = defineStore('company', () => {
   // State
@@ -11,6 +12,7 @@ export const useCompanyStore = defineStore('company', () => {
 
   // Composables
   const { setThemeFromCompany, setFavicon } = useTheme()
+  const { setCompanySeo } = useSeo()
 
   // Getters
   const isLoaded = computed(() => company.value !== null)
@@ -73,10 +75,8 @@ export const useCompanyStore = defineStore('company', () => {
           setFavicon(response.data.favicon_url)
         }
         
-        // Update document title
-        if (response.data.nombre) {
-          document.title = `${response.data.nombre} - Catálogo`
-        }
+        // Update SEO meta tags
+        setCompanySeo(response.data)
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Error loading company data'
@@ -86,10 +86,9 @@ export const useCompanyStore = defineStore('company', () => {
   }
 
   const updateTitle = (pageTitle?: string) => {
-    if (!company.value?.nombre) return
+    if (!company.value) return
     
-    const baseTitle = company.value.nombre
-    document.title = pageTitle ? `${pageTitle} - ${baseTitle}` : `${baseTitle} - Catálogo`
+    setCompanySeo(company.value, pageTitle)
   }
 
   // Initialize if not loaded
