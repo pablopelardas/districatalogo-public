@@ -196,27 +196,84 @@ export const useCartStore = defineStore('cart', () => {
     return encodeURIComponent(body)
   }
   
-  const exportForWhatsAppPedido = (companyName: string) => {
+  const exportForWhatsAppPedido = (companyName: string, messageTemplate?: string, customerData?: any) => {
     if (isEmpty.value) return ''
     
-    let message = `🛒 *PEDIDO - ${companyName}*\n\n`
-    message += `Hola! Me gustaría hacer el siguiente pedido:\n\n`
+    // Default template if not provided
+    const defaultTemplate = 'Hola, quiero hacer el siguiente pedido:\n{{items}}\nTotal: ${{total}}'
+    const template = messageTemplate || defaultTemplate
     
+    // Build customer data header if provided
+    let customerInfo = ''
+    if (customerData && Object.keys(customerData).length > 0) {
+      // Field mapping with emojis for known fields
+      const fieldIcons: Record<string, string> = {
+        nombre: '👤',
+        numero_cliente: '🆔',
+        telefono: '📱',
+        direccion_entrega: '📍',
+        direccion: '📍',
+        email: '📧',
+        observaciones: '💬',
+        dni: '🪪',
+        cuit: '🏢',
+        empresa: '🏢',
+        horario: '🕐',
+        fecha_entrega: '📅'
+      }
+      
+      // Field display names
+      const fieldLabels: Record<string, string> = {
+        nombre: 'Nombre',
+        numero_cliente: 'N° Cliente',
+        telefono: 'Teléfono',
+        direccion_entrega: 'Dirección',
+        direccion: 'Dirección',
+        email: 'Email',
+        observaciones: 'Observaciones',
+        dni: 'DNI',
+        cuit: 'CUIT',
+        empresa: 'Empresa',
+        horario: 'Horario',
+        fecha_entrega: 'Fecha de entrega'
+      }
+      
+      customerInfo = '📋 *DATOS DEL CLIENTE*\n'
+      
+      // Process all fields dynamically
+      Object.entries(customerData).forEach(([key, value]) => {
+        if (value) {
+          const icon = fieldIcons[key] || '▪️'
+          const label = fieldLabels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+          customerInfo += `${icon} ${label}: ${value}\n`
+        }
+      })
+      
+      customerInfo += '\n'
+    }
+    
+    // Build items list
+    let itemsList = ''
     items.value.forEach((item, index) => {
       const total = item.precio * item.cantidad
-      message += `*${index + 1}. ${item.nombre}*\n`
-      message += `   📦 Código: ${item.codigo}\n`
-      message += `   🔢 Cantidad: ${item.cantidad}\n`
-      message += `   💰 Precio: $${item.precio.toFixed(2)} c/u\n`
-      message += `   💵 Subtotal: $${total.toFixed(2)}\n\n`
+      itemsList += `*${index + 1}. ${item.nombre}*\n`
+      itemsList += `   📦 Código: ${item.codigo}\n`
+      itemsList += `   🔢 Cantidad: ${item.cantidad}\n`
+      itemsList += `   💰 Precio: $${item.precio.toFixed(2)} c/u\n`
+      itemsList += `   💵 Subtotal: $${total.toFixed(2)}\n\n`
     })
     
-    message += `━━━━━━━━━━━━━━━━━━━━\n`
-    message += `📊 *RESUMEN DEL PEDIDO*\n`
-    message += `🛍️ Total productos: ${totalItems.value}\n`
-    message += `💸 *TOTAL GENERAL: $${totalAmount.value.toFixed(2)}*\n\n`
-    message += `¿Podrían confirmarme disponibilidad y precio final?\n\n`
-    message += `_Nota: Este pedido está basado en los precios del catálogo web y está sujeto a confirmación._`
+    // Replace placeholders in template
+    let message = template
+      .replace('{{items}}', itemsList.trim())
+      .replace('{{total}}', totalAmount.value.toFixed(2))
+      .replace('{{empresa}}', companyName)
+      .replace('{{total_productos}}', totalItems.value.toString())
+    
+    // Add customer data at the beginning of the message
+    if (customerInfo) {
+      message = customerInfo + message
+    }
     
     return encodeURIComponent(message)
   }

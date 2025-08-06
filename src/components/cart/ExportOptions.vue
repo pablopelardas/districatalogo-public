@@ -53,10 +53,10 @@
               <ChevronRightIcon class="w-5 h-5 text-gray-400 group-hover:text-purple-600" />
             </button>
             
-            <!-- WhatsApp to Company (if configured) -->
+            <!-- WhatsApp to Company (if configured and feature enabled) -->
             <button 
-              v-if="companyStore.whatsappUrl"
-              @click="exportToCompanyWhatsApp"
+              v-if="companyStore.whatsappUrl && companyStore.hasWhatsAppOrders"
+              @click="() => exportToCompanyWhatsApp()"
               class="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors cursor-pointer group border-2 border-green-200"
             >
               <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white">
@@ -132,14 +132,24 @@
       </div>
     </div>
   </Transition>
+  
+  <!-- Customer Data Modal -->
+  <CustomerDataModal
+    :is-open="showCustomerDataModal"
+    :required-fields="companyStore.requiredOrderFields"
+    @close="showCustomerDataModal = false"
+    @submit="handleCustomerDataSubmit"
+  />
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useCompanyStore } from '@/stores/company'
 import { useToast } from '@/composables/useToast'
 import jsPDF from 'jspdf'
+import CustomerDataModal from './CustomerDataModal.vue'
+import type { CustomerData } from './CustomerDataModal.vue'
 import { 
   XMarkIcon,
   EnvelopeIcon,
@@ -166,22 +176,49 @@ const companyStore = useCompanyStore()
 // Composables
 const { success, error } = useToast()
 
+// State
+const showCustomerDataModal = ref(false)
+const pendingCustomerData = ref<CustomerData | null>(null)
+
 // Methods
 const closeModal = () => {
   emit('close')
 }
 
 const askToClearCart = () => {
-  setTimeout(() => {
-    if (confirm('¿Deseas limpiar tu lista de compras?')) {
-      cartStore.clearCart()
-      success('Lista limpiada', 'Tu lista de compras ha sido vaciada')
-    }
-  }, 500)
+  // Removed the confirm dialog - let users clear manually if they want
+  // This provides a better UX without interrupting the flow
 }
 
-const exportToCompanyWhatsApp = () => {
-  const message = cartStore.exportForWhatsAppPedido(companyStore.companyName)
+const handleCustomerDataSubmit = (data: CustomerData) => {
+  showCustomerDataModal.value = false
+  // Call exportToCompanyWhatsApp with the customer data
+  exportToCompanyWhatsApp(data)
+}
+
+const exportToCompanyWhatsApp = (customerData?: CustomerData) => {
+  // Check if we need to collect customer data first
+  if (companyStore.hasRequiredFields && companyStore.requiredOrderFields.length > 0 && !customerData) {
+    showCustomerDataModal.value = true
+    return
+  }
+  
+  // Get template from feature metadata
+  const whatsappFeature = companyStore.company?.features?.find(f => f.codigo === 'pedido_whatsapp' && f.habilitado)
+  let messageTemplate = whatsappFeature?.metadata?.mensaje_template
+  
+  // Decode base64 if needed
+  if (messageTemplate && messageTemplate.startsWith('base64:')) {
+    try {
+      const base64Content = messageTemplate.replace('base64:type15:', '')
+      messageTemplate = atob(base64Content)
+    } catch (error) {
+      console.error('Error decoding base64 template:', error)
+      messageTemplate = undefined
+    }
+  }
+  
+  const message = cartStore.exportForWhatsAppPedido(companyStore.companyName, messageTemplate, customerData)
   // Extract phone number from WhatsApp URL
   const whatsappUrl = companyStore.whatsappUrl
   let phoneNumber = ''

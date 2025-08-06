@@ -44,6 +44,18 @@ interface CatalogResponse {
   categorias: Category[]
 }
 
+interface Feature {
+  codigo: string
+  nombre: string
+  descripcion?: string
+  habilitado: boolean
+  valor?: string
+  metadata?: {
+    mensaje_template?: string
+    [key: string]: any
+  }
+}
+
 interface Company {
   id: number
   codigo: string
@@ -66,6 +78,7 @@ interface Company {
   productos_por_pagina: number
   plan: string
   activa: boolean
+  features?: Feature[]
 }
 
 interface CatalogFilters {
@@ -282,6 +295,7 @@ export type {
   Product, 
   Category, 
   Company, 
+  Feature,
   CatalogResponse, 
   CatalogFilters, 
   ApiResponse 

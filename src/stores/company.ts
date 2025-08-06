@@ -26,6 +26,31 @@ export const useCompanyStore = defineStore('company', () => {
   const facebookUrl = computed(() => company.value?.url_facebook || '')
   const instagramUrl = computed(() => company.value?.url_instagram || '')
   
+  // Feature flags
+  const hasFeature = (featureCode: string) => {
+    return company.value?.features?.some(feature => feature.codigo === featureCode && feature.habilitado) ?? false
+  }
+  
+  const getFeature = (featureCode: string) => {
+    return company.value?.features?.find(feature => feature.codigo === featureCode && feature.habilitado)
+  }
+  
+  const hasWhatsAppOrders = computed(() => hasFeature('pedido_whatsapp'))
+  const hasRequiredFields = computed(() => hasFeature('pedido_campos_requeridos'))
+  
+  const requiredOrderFields = computed(() => {
+    const feature = getFeature('pedido_campos_requeridos')
+    if (!feature?.valor) return []
+    
+    try {
+      const fields = JSON.parse(feature.valor)
+      return Array.isArray(fields) ? fields : []
+    } catch (error) {
+      console.error('Error parsing required fields:', error)
+      return []
+    }
+  })
+  
   // Social media links that exist
   const socialLinks = computed(() => {
     const links = []
@@ -116,6 +141,13 @@ export const useCompanyStore = defineStore('company', () => {
     facebookUrl,
     instagramUrl,
     socialLinks,
+    
+    // Feature flags
+    hasFeature,
+    getFeature,
+    hasWhatsAppOrders,
+    hasRequiredFields,
+    requiredOrderFields,
     
     // Actions
     fetchCompany,
